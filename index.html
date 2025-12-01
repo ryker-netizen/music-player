@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixelSound - Пикселизация Музыки</title>
+    <title>PixelSound 2.0 - Pro Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -20,1305 +20,518 @@
             --pixel-light: #ccccff;
         }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; image-rendering: pixelated; user-select: none; }
 
         body {
             background: linear-gradient(135deg, var(--pixel-dark) 0%, #1a1a3a 50%, #0d0d2a 100%);
             min-height: 100vh;
             font-family: 'Silkscreen', monospace;
             color: var(--pixel-light);
-            overflow-x: hidden;
             padding: 20px;
         }
 
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+        .container { max-width: 900px; margin: 0 auto; }
 
-        /* Шапка */
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-            padding: 20px 0;
+        /* Drag & Drop Overlay style */
+        .drag-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 255, 136, 0.2);
+            z-index: 1000; display: none;
+            justify-content: center; align-items: center;
+            font-family: 'Press Start 2P'; font-size: 2rem; color: #fff;
+            text-shadow: 4px 4px 0 #000;
+            backdrop-filter: blur(5px);
+            border: 10px dashed var(--pixel-green);
         }
+        .drag-active .drag-overlay { display: flex; }
 
-        .header::before, .header::after {
-            content: '';
-            position: absolute;
-            height: 4px;
-            left: 10%;
-            right: 10%;
-            background: linear-gradient(90deg, transparent, var(--pixel-cyan), var(--pixel-purple), var(--pixel-pink), transparent);
-        }
-
-        .header::before {
-            top: 0;
-        }
-
-        .header::after {
-            bottom: 0;
-        }
-
+        /* Header */
+        .header { text-align: center; margin-bottom: 30px; position: relative; padding: 20px 0; }
         .title {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 2.8rem;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-            color: var(--pixel-cyan);
-            text-shadow: 
-                4px 4px 0 var(--pixel-purple),
-                8px 8px 0 rgba(0, 0, 0, 0.5);
-            letter-spacing: 2px;
-            line-height: 1.3;
-        }
-
-        .subtitle {
-            font-size: 1.2rem;
-            color: var(--pixel-green);
-            text-shadow: 2px 2px 0 #000;
+            font-family: 'Press Start 2P', cursive; font-size: 2.5rem; color: var(--pixel-cyan);
+            text-shadow: 4px 4px 0 var(--pixel-purple), 6px 6px 0 rgba(0,0,0,0.5);
             margin-bottom: 10px;
         }
+        .subtitle { color: var(--pixel-green); font-size: 1rem; letter-spacing: 1px; }
 
-        /* Основной плеер */
+        /* Main Player */
         .player-container {
-            background: rgba(20, 20, 40, 0.9);
-            border: 8px solid;
-            border-image: linear-gradient(45deg, var(--pixel-blue), var(--pixel-purple), var(--pixel-pink)) 1;
-            padding: 30px;
-            margin-bottom: 40px;
-            box-shadow: 
-                0 0 30px rgba(0, 102, 255, 0.3),
-                inset 0 0 20px rgba(0, 0, 0, 0.5);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .player-container::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--pixel-blue), var(--pixel-cyan), var(--pixel-green), var(--pixel-yellow), var(--pixel-red), var(--pixel-purple), var(--pixel-pink));
-            z-index: 1;
-        }
-
-        /* Визуализатор */
-        .visualizer-container {
-            background: #000;
+            background: rgba(20, 20, 40, 0.95);
             border: 6px solid var(--pixel-gray);
-            margin-bottom: 30px;
-            padding: 10px;
-            height: 220px;
+            box-shadow: 10px 10px 0 #000;
+            padding: 20px; margin-bottom: 30px;
             position: relative;
-            overflow: hidden;
         }
 
-        #pixelViz {
-            width: 100%;
-            height: 100%;
-            display: block;
+        /* Visualizer */
+        .visualizer-wrapper {
+            position: relative;
+            border: 4px solid var(--pixel-dark);
+            height: 200px; margin-bottom: 20px;
             background: #000;
         }
+        canvas { display: block; width: 100%; height: 100%; }
+        
+        .scanline {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: rgba(0, 255, 255, 0.3);
+            animation: scan 4s linear infinite; pointer-events: none;
+        }
 
-        /* Информация о треке */
+        /* Track Info */
         .track-info {
-            background: rgba(0, 0, 0, 0.7);
-            border: 4px solid var(--pixel-gray);
-            padding: 15px;
-            margin-bottom: 25px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            background: #000; border: 2px solid var(--pixel-gray);
+            padding: 15px; margin-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: center;
         }
+        .track-name { color: var(--pixel-yellow); font-family: 'Press Start 2P'; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 60%; }
+        .track-meta { color: var(--pixel-cyan); font-size: 0.8rem; display: flex; gap: 15px; }
 
-        .track-name {
-            font-size: 1.2rem;
-            color: var(--pixel-yellow);
-            text-shadow: 2px 2px 0 #000;
-            font-family: 'Press Start 2P', cursive;
-        }
-
-        .track-stats {
-            display: flex;
-            gap: 20px;
-            font-size: 0.9rem;
-            color: var(--pixel-cyan);
-        }
-
-        /* Панель управления */
-        .control-panel {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 25px;
+        /* Controls Grid */
+        .controls-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px; margin-bottom: 20px;
         }
 
         .control-group {
-            background: rgba(30, 30, 60, 0.8);
-            border: 4px solid var(--pixel-gray);
-            padding: 15px;
+            background: rgba(255,255,255,0.05); padding: 15px;
+            border: 2px solid var(--pixel-gray);
+        }
+        .control-title { color: var(--pixel-green); font-size: 0.8rem; margin-bottom: 10px; display: block; }
+        
+        /* Sliders */
+        input[type=range] {
+            width: 100%; -webkit-appearance: none; background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 10px; background: var(--pixel-dark);
+            border: 2px solid var(--pixel-gray);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 24px; width: 12px;
+            background: var(--pixel-cyan); margin-top: -9px;
+            border: 2px solid #fff; cursor: pointer;
+            box-shadow: 2px 2px 0 #000;
         }
 
-        .control-label {
-            color: var(--pixel-green);
-            font-size: 1rem;
-            margin-bottom: 10px;
-            display: block;
-            text-shadow: 1px 1px 0 #000;
-        }
-
-        /* Кнопки */
-        .buttons-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-top: 20px;
-        }
-
+        /* Buttons */
+        .btn-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        
         .pixel-btn {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 0.8rem;
-            padding: 15px 5px;
-            border: none;
-            cursor: pointer;
-            text-transform: uppercase;
-            transition: all 0.1s ease;
-            background: var(--pixel-gray);
-            color: white;
-            position: relative;
-            border: 4px solid #000;
-            text-shadow: 1px 1px 0 #000;
-            min-height: 60px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+            font-family: 'Press Start 2P'; font-size: 0.7rem;
+            padding: 15px 5px; border: none; cursor: pointer;
+            background: var(--pixel-gray); color: #fff;
+            border-bottom: 4px solid #000; border-right: 4px solid #000;
+            transition: all 0.1s; position: relative;
+            display: flex; flex-direction: column; align-items: center; gap: 8px;
         }
-
-        .pixel-btn i {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-        }
-
-        .pixel-btn:hover {
-            transform: translate(-2px, -2px);
-            box-shadow: 4px 4px 0 #000;
-        }
-
-        .pixel-btn:active {
-            transform: translate(1px, 1px);
-            box-shadow: 1px 1px 0 #000;
-        }
-
-        .btn-upload { background: var(--pixel-blue); }
-        .btn-play { background: var(--pixel-green); }
-        .btn-pause { background: var(--pixel-yellow); color: #000; }
+        .pixel-btn:active { transform: translate(2px, 2px); border-width: 0; margin: 2px 0 0 2px; }
+        
+        .btn-play { background: var(--pixel-green); color: #000; }
         .btn-stop { background: var(--pixel-red); }
-        .btn-pixelize { background: var(--pixel-purple); }
-        .btn-reset { background: var(--pixel-cyan); color: #000; }
+        .btn-pixel { background: var(--pixel-purple); }
+        .btn-upload { background: var(--pixel-blue); }
 
-        /* Регуляторы */
-        .slider-container {
-            margin: 15px 0;
+        /* Piano */
+        .piano-section {
+            background: rgba(20,20,40,0.9); border: 6px solid var(--pixel-gray);
+            padding: 20px; text-align: center; box-shadow: 10px 10px 0 #000;
         }
-
-        .slider {
-            width: 100%;
-            height: 20px;
-            -webkit-appearance: none;
-            background: linear-gradient(90deg, var(--pixel-dark), var(--pixel-blue));
-            border: 3px solid #000;
-            outline: none;
+        .piano-keys {
+            display: inline-flex; position: relative; margin-top: 10px; height: 140px;
         }
-
-        .slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 24px;
-            height: 32px;
-            background: var(--pixel-cyan);
-            border: 3px solid #000;
-            cursor: pointer;
-            box-shadow: 2px 2px 0 #000;
+        .key {
+            border: 2px solid #000; cursor: pointer; position: relative;
+            transition: background 0.1s;
         }
-
-        .slider::-moz-range-thumb {
-            width: 24px;
-            height: 32px;
-            background: var(--pixel-cyan);
-            border: 3px solid #000;
-            cursor: pointer;
-            box-shadow: 2px 2px 0 #000;
+        .key-white {
+            width: 44px; height: 100%; background: #fff; z-index: 1;
+            border-bottom-width: 6px;
         }
-
-        /* Пиксельная клавиатура */
-        .piano-container {
-            background: rgba(20, 20, 40, 0.9);
-            border: 8px solid;
-            border-image: linear-gradient(45deg, var(--pixel-green), var(--pixel-yellow), var(--pixel-cyan)) 1;
-            padding: 25px;
-            margin-bottom: 40px;
-            box-shadow: 
-                0 0 20px rgba(0, 255, 136, 0.2),
-                inset 0 0 15px rgba(0, 0, 0, 0.5);
+        .key-black {
+            width: 30px; height: 60%; background: #000; z-index: 2;
+            margin: 0 -15px; position: relative;
+            border-bottom: 4px solid #333;
         }
+        .key.active { background: var(--pixel-pink); transform: translateY(2px); }
+        .key-black.active { background: var(--pixel-purple); border-color: transparent; }
 
-        .piano-title {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 1.5rem;
-            color: var(--pixel-green);
-            text-align: center;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 0 #000;
-        }
-
-        .piano {
-            display: flex;
-            justify-content: center;
-            height: 120px;
-            margin-bottom: 15px;
-            position: relative;
-        }
-
-        .piano-key {
-            position: relative;
-            border: 3px solid #000;
-            cursor: pointer;
-            transition: all 0.1s;
-        }
-
-        .white-key {
-            width: 40px;
-            height: 100%;
-            background: linear-gradient(to bottom, #fff 0%, #eee 100%);
-            z-index: 1;
-            margin-right: 1px;
-        }
-
-        .black-key {
-            width: 24px;
-            height: 65%;
-            background: linear-gradient(to bottom, #333 0%, #000 100%);
-            z-index: 2;
-            margin-left: -12px;
-            margin-right: -12px;
-        }
-
-        .piano-key:active, .piano-key.active {
-            transform: translateY(3px);
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
-        }
-
-        .white-key:active, .white-key.active {
-            background: linear-gradient(to bottom, #ddd 0%, #ccc 100%);
-        }
-
-        .black-key:active, .black-key.active {
-            background: linear-gradient(to bottom, #222 0%, #111 100%);
-        }
-
-        .key-labels {
-            display: flex;
-            justify-content: center;
-            gap: 1px;
-            margin-top: 10px;
-        }
-
-        .key-label {
-            width: 40px;
-            text-align: center;
-            font-size: 0.7rem;
-            color: var(--pixel-cyan);
-            font-family: 'Press Start 2P', cursive;
-        }
-
-        .key-label.black {
-            margin-left: -12px;
-            margin-right: -12px;
-            width: 24px;
-        }
-
-        /* Статус */
-        .status-bar {
-            background: rgba(0, 0, 0, 0.8);
-            border: 4px solid var(--pixel-gray);
-            padding: 12px;
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .status-text {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 0.9rem;
-            color: var(--pixel-green);
-        }
-
-        .visualizer-mode {
-            color: var(--pixel-cyan);
-            font-size: 0.9rem;
-        }
-
-        /* Футер */
-        .footer {
-            text-align: center;
-            padding: 30px 0;
-            margin-top: 40px;
-            border-top: 4px solid;
-            border-image: linear-gradient(90deg, transparent, var(--pixel-purple), var(--pixel-pink), transparent) 1;
-            position: relative;
-        }
-
-        .footer::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 10%;
-            right: 10%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, var(--pixel-cyan), transparent);
-        }
-
-        .copyright {
-            font-family: 'Press Start 2P', cursive;
-            font-size: 0.9rem;
-            color: var(--pixel-yellow);
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 0 #000;
-        }
-
-        .footer-text {
-            font-size: 1rem;
-            color: var(--pixel-light);
-            opacity: 0.8;
-        }
-
-        /* Адаптивность */
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .title {
-                font-size: 2rem;
-            }
-            
-            .buttons-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
-            .piano-key {
-                width: 30px;
-            }
-            
-            .black-key {
-                width: 18px;
-                margin-left: -9px;
-                margin-right: -9px;
-            }
-            
-            .key-label {
-                width: 30px;
-                font-size: 0.6rem;
-            }
-            
-            .key-label.black {
-                width: 18px;
-                margin-left: -9px;
-                margin-right: -9px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .title {
-                font-size: 1.5rem;
-            }
-            
-            .buttons-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .control-panel {
-                grid-template-columns: 1fr;
-            }
-            
-            .piano-key {
-                width: 24px;
-            }
-            
-            .black-key {
-                width: 14px;
-                margin-left: -7px;
-                margin-right: -7px;
-            }
-        }
-
-        /* Анимации */
-        @keyframes pixelGlow {
-            0%, 100% { box-shadow: 0 0 10px var(--pixel-cyan), 0 0 20px var(--pixel-blue); }
-            50% { box-shadow: 0 0 20px var(--pixel-pink), 0 0 30px var(--pixel-purple); }
-        }
-
-        .glowing {
-            animation: pixelGlow 2s infinite alternate;
-        }
-
-        @keyframes scanline {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-        }
-
-        .scanline {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(to bottom, transparent, rgba(0, 255, 255, 0.5), transparent);
-            animation: scanline 3s linear infinite;
-            pointer-events: none;
-            z-index: 10;
+        @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+        
+        @media (max-width: 600px) {
+            .btn-row { grid-template-columns: repeat(2, 1fr); }
+            .key-white { width: 34px; } .key-black { width: 20px; margin: 0 -10px; }
+            .title { font-size: 1.5rem; }
         }
     </style>
 </head>
-<body>
+<body class="drop-zone">
+    <div class="drag-overlay">DROP FILE HERE</div>
+
     <div class="container">
-        <!-- Шапка -->
         <header class="header">
-            <h1 class="title">PixelSound</h1>
-            <div class="subtitle">ПИКСЕЛИЗАЦИЯ МУЗЫКИ В РЕАЛЬНОМ ВРЕМЕНИ</div>
+            <h1 class="title">PixelSound <span style="font-size:0.5em; color:var(--pixel-pink)">v2.0</span></h1>
+            <div class="subtitle">DRAG & DROP READY • REAL BITCRUSHER</div>
         </header>
 
-        <!-- Основной плеер -->
         <main class="player-container">
-            <div class="visualizer-container">
-                <canvas id="pixelViz" width="800" height="200"></canvas>
+            <div class="visualizer-wrapper" id="vizContainer">
+                <canvas id="mainCanvas"></canvas>
                 <div class="scanline"></div>
             </div>
 
             <div class="track-info">
-                <div class="track-name" id="trackName">ЗАГРУЗИТЕ ВАШ ТРЕК</div>
-                <div class="track-stats">
-                    <span id="bitDepth">16-bit</span>
-                    <span id="sampleRate">44.1kHz</span>
-                    <span id="pixelLevel">Pixel: 0%</span>
+                <div class="track-name" id="uiTrackName">NO TAPE INSERTED</div>
+                <div class="track-meta">
+                    <span id="uiBitDepth">16-BIT</span>
+                    <span id="uiSampleRate">44.1KHZ</span>
                 </div>
             </div>
 
-            <div class="control-panel">
+            <div class="controls-grid">
                 <div class="control-group">
-                    <span class="control-label">ГРОМКОСТЬ</span>
-                    <div class="slider-container">
-                        <input type="range" min="0" max="100" value="70" class="slider" id="volumeSlider">
-                    </div>
-                    <div class="control-label">УРОВЕНЬ: <span id="volumeValue">70%</span></div>
+                    <span class="control-title">VOLUME</span>
+                    <input type="range" id="volSlider" min="0" max="100" value="80">
                 </div>
-
                 <div class="control-group">
-                    <span class="control-label">ПИКСЕЛИЗАЦИЯ</span>
-                    <div class="slider-container">
-                        <input type="range" min="0" max="100" value="0" class="slider" id="pixelSlider">
-                    </div>
-                    <div class="control-label">ЭФФЕКТ: <span id="pixelValue">0%</span></div>
+                    <span class="control-title">BIT CRUSH (DEPTH)</span>
+                    <input type="range" id="bitSlider" min="1" max="16" value="16" step="1">
                 </div>
-
                 <div class="control-group">
-                    <span class="control-label">ЭФФЕКТЫ</span>
-                    <div class="slider-container">
-                        <input type="range" min="0" max="100" value="50" class="slider" id="effectSlider">
-                    </div>
-                    <div class="control-label">РЕЗОЛЮЦИЯ: <span id="effectValue">СРЕДНЯЯ</span></div>
+                    <span class="control-title">DOWNSAMPLE (RATE)</span>
+                    <input type="range" id="rateSlider" min="1" max="50" value="1">
                 </div>
             </div>
 
-            <!-- Кнопки управления -->
-            <div class="buttons-grid">
-                <button class="pixel-btn btn-upload" onclick="uploadAudio()">
-                    <i class="fas fa-file-upload"></i>
-                    ЗАГРУЗИТЬ
-                </button>
-                <button class="pixel-btn btn-play" onclick="playAudio()">
-                    <i class="fas fa-play"></i>
-                    ИГРАТЬ
-                </button>
-                <button class="pixel-btn btn-pause" onclick="pauseAudio()">
-                    <i class="fas fa-pause"></i>
-                    ПАУЗА
-                </button>
-                <button class="pixel-btn btn-stop" onclick="stopAudio()">
-                    <i class="fas fa-stop"></i>
-                    СТОП
-                </button>
-                <button class="pixel-btn btn-pixelize" onclick="applyPixelEffect()">
-                    <i class="fas fa-gamepad"></i>
-                    PIXELIZE!
-                </button>
-                <button class="pixel-btn btn-reset" onclick="resetEffects()">
-                    <i class="fas fa-undo"></i>
-                    СБРОС
-                </button>
-            </div>
-
-            <!-- Статус -->
-            <div class="status-bar">
-                <div class="status-text" id="status">ГОТОВ К РАБОТЕ</div>
-                <div class="visualizer-mode" id="vizMode">РЕЖИМ: СПЕКТР</div>
+            <div class="btn-row">
+                <button class="pixel-btn btn-upload" id="btnUpload"><i class="fas fa-eject"></i> LOAD</button>
+                <button class="pixel-btn btn-play" id="btnPlay"><i class="fas fa-play"></i> PLAY</button>
+                <button class="pixel-btn btn-stop" id="btnStop"><i class="fas fa-stop"></i> STOP</button>
+                <button class="pixel-btn btn-pixel" id="btnMode"><i class="fas fa-eye"></i> MODE</button>
             </div>
         </main>
 
-        <!-- Пиксельная клавиатура -->
-        <section class="piano-container">
-            <h2 class="piano-title">ПИКСЕЛЬНОЕ ПИАНИНО</h2>
-            <div class="piano" id="piano">
-                <!-- Белые клавиши будут сгенерированы через JS -->
-            </div>
-            <div class="key-labels" id="keyLabels">
-                <!-- Надписи клавиш будут сгенерированы через JS -->
-            </div>
-            <div style="text-align: center; margin-top: 15px;">
-                <button class="pixel-btn" onclick="playDemo()" style="background: var(--pixel-purple); width: 200px; margin: 0 auto;">
-                    <i class="fas fa-music"></i>
-                    ДЕМО МЕЛОДИЯ
-                </button>
-            </div>
+        <section class="piano-section">
+            <div style="font-family: 'Press Start 2P'; color: var(--pixel-green); margin-bottom: 10px;">SYNTH KEYBOARD</div>
+            <div class="piano-keys" id="pianoContainer"></div>
         </section>
-
-        <!-- Футер -->
-        <footer class="footer">
-            <div class="copyright">КАПУСТА STUDIO © 2025</div>
-            <div class="footer-text">PixelSound - превращаем музыку в пиксельное искусство</div>
-        </footer>
     </div>
 
-    <!-- Аудио элемент (скрытый) -->
-    <audio id="audioPlayer" crossorigin="anonymous"></audio>
+    <input type="file" id="fileInput" accept="audio/*" style="display:none">
 
     <script>
-        // Элементы DOM
-        const canvas = document.getElementById('pixelViz');
-        const ctx = canvas.getContext('2d');
-        const audioPlayer = document.getElementById('audioPlayer');
-        const trackName = document.getElementById('trackName');
-        const statusEl = document.getElementById('status');
-        const vizModeEl = document.getElementById('vizMode');
-        const volumeSlider = document.getElementById('volumeSlider');
-        const volumeValue = document.getElementById('volumeValue');
-        const pixelSlider = document.getElementById('pixelSlider');
-        const pixelValue = document.getElementById('pixelValue');
-        const effectSlider = document.getElementById('effectSlider');
-        const effectValue = document.getElementById('effectValue');
-        const bitDepthEl = document.getElementById('bitDepth');
-        const sampleRateEl = document.getElementById('sampleRate');
-        const pixelLevelEl = document.getElementById('pixelLevel');
-
-        // Аудио переменные
-        let audioContext;
-        let analyser;
-        let source;
-        let gainNode;
-        let distortionNode;
-        let filterNode;
-        let isPlaying = false;
-        let animationId;
-        let currentFile = null;
-        let pixelizationLevel = 0;
-        let effectLevel = 50;
-        let vizMode = 0; // 0 - спектр, 1 - волна, 2 - частицы
-
-        // Пиксельные эффекты
-        const pixelEffects = {
-            applyBitCrush: (audioBuffer, bits) => {
-                const step = Math.pow(2, 16 - Math.floor(bits / 6.4)); // 0-100% -> 16-8 бит
-                const data = audioBuffer.getChannelData(0);
+        /**
+         * AUDIO ENGINE
+         * Handles Context, Nodes, and Processing logic.
+         */
+        class AudioEngine {
+            constructor() {
+                this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                this.source = null;
+                this.audioBuffer = null;
+                this.isPlaying = false;
                 
-                for (let i = 0; i < data.length; i++) {
-                    data[i] = Math.floor(data[i] * step) / step;
-                }
+                // Nodes
+                this.gainNode = this.ctx.createGain();
+                this.analyser = this.ctx.createAnalyser();
+                this.analyser.fftSize = 2048; // Higher res for better visuals
                 
-                return audioBuffer;
-            },
-            
-            applySampleRateReduction: (audioBuffer, reduction) => {
-                const factor = Math.floor(reduction / 10) + 1; // 0-100% -> фактор 1-11
-                const data = audioBuffer.getChannelData(0);
-                const newData = new Float32Array(data.length);
+                // Bitcrusher Logic (ScriptProcessor for true sample degradation)
+                // Note: AudioWorklet is better for production, but ScriptProcessor fits single-file easier
+                this.scriptNode = this.ctx.createScriptProcessor(4096, 1, 1);
+                this.bitDepth = 16;
+                this.normFactor = 1; // Downsampling factor
                 
-                for (let i = 0; i < data.length; i += factor) {
-                    const value = data[i];
-                    for (let j = 0; j < factor && i + j < data.length; j++) {
-                        newData[i + j] = value;
-                    }
-                }
+                this.setupProcessor();
                 
-                audioBuffer.copyToChannel(newData, 0);
-                return audioBuffer;
-            },
-            
-            applyLowPass: (audioBuffer, cutoff) => {
-                // Простой low-pass фильтр
-                const alpha = cutoff / 100;
-                const data = audioBuffer.getChannelData(0);
-                const filtered = new Float32Array(data.length);
-                
-                filtered[0] = data[0];
-                for (let i = 1; i < data.length; i++) {
-                    filtered[i] = alpha * data[i] + (1 - alpha) * filtered[i - 1];
-                }
-                
-                audioBuffer.copyToChannel(filtered, 0);
-                return audioBuffer;
+                // Connections
+                this.scriptNode.connect(this.gainNode);
+                this.gainNode.connect(this.analyser);
+                this.analyser.connect(this.ctx.destination);
             }
+
+            setupProcessor() {
+                this.scriptNode.onaudioprocess = (e) => {
+                    const input = e.inputBuffer.getChannelData(0);
+                    const output = e.outputBuffer.getChannelData(0);
+                    
+                    const step = Math.pow(0.5, this.bitDepth);
+                    
+                    for (let i = 0; i < input.length; i++) {
+                        // Sample Rate Reduction (Hold effect)
+                        // Only update sample every Nth frame
+                        let sample = input[i];
+                        if (i % this.normFactor !== 0) {
+                            sample = input[i - (i % this.normFactor)] || 0;
+                        }
+
+                        // Bit Depth Reduction (Quantization)
+                        // Math: floor(sample / step) * step
+                        if (this.bitDepth < 16) {
+                           sample = Math.floor(sample / step) * step; 
+                        }
+
+                        output[i] = sample;
+                    }
+                };
+            }
+
+            async loadFile(file) {
+                const arrayBuffer = await file.arrayBuffer();
+                this.audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+                return this.audioBuffer;
+            }
+
+            play() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                if (!this.audioBuffer) return;
+                
+                this.stop(); // Stop previous
+                
+                this.source = this.ctx.createBufferSource();
+                this.source.buffer = this.audioBuffer;
+                
+                // Chain: Source -> Script(Bitcrush) -> Gain -> Analyser -> Out
+                this.source.connect(this.scriptNode);
+                
+                this.source.start(0);
+                this.isPlaying = true;
+                
+                this.source.onended = () => {
+                    this.isPlaying = false;
+                    document.dispatchEvent(new Event('audio-ended'));
+                };
+            }
+
+            stop() {
+                if (this.source) {
+                    try { this.source.stop(); } catch(e){}
+                    this.source.disconnect();
+                    this.source = null;
+                }
+                this.isPlaying = false;
+            }
+
+            playTone(freq) {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const osc = this.ctx.createOscillator();
+                const oscGain = this.ctx.createGain();
+                
+                // Choose type based on bit depth to match aesthetic
+                osc.type = this.bitDepth < 4 ? 'square' : 'sawtooth';
+                osc.frequency.value = freq;
+                
+                oscGain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                oscGain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.5);
+                
+                osc.connect(this.scriptNode); // Pass through effects
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.5);
+            }
+
+            setVolume(val) {
+                this.gainNode.gain.value = val;
+            }
+
+            updateEffects(bits, rate) {
+                this.bitDepth = bits;
+                this.normFactor = Math.floor(rate);
+            }
+        }
+
+        /**
+         * VISUALIZER CLASS
+         */
+        class Visualizer {
+            constructor(canvasId, analyser) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.analyser = analyser;
+                this.mode = 0; // 0: Spectrum, 1: Wave
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+            }
+
+            resize() {
+                this.canvas.width = this.canvas.parentElement.offsetWidth;
+                this.canvas.height = this.canvas.parentElement.offsetHeight;
+            }
+
+            toggleMode() {
+                this.mode = (this.mode + 1) % 2;
+            }
+
+            draw() {
+                requestAnimationFrame(() => this.draw());
+                
+                const w = this.canvas.width;
+                const h = this.canvas.height;
+                const bufferLength = this.analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(0, 0, w, h);
+
+                if (this.mode === 0) {
+                    // Spectrum
+                    this.analyser.getByteFrequencyData(dataArray);
+                    const barWidth = (w / bufferLength) * 2.5;
+                    let x = 0;
+
+                    for(let i = 0; i < bufferLength; i++) {
+                        let barHeight = dataArray[i] / 255 * h;
+                        
+                        // Pixelated coloring
+                        const hue = i + (Date.now() / 20);
+                        this.ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                        
+                        // Draw blocky
+                        const blocks = Math.floor(barHeight / 10);
+                        for(let j=0; j<blocks; j++) {
+                            this.ctx.fillRect(x, h - (j * 12), barWidth, 10);
+                        }
+                        x += barWidth + 2;
+                    }
+                } else {
+                    // Waveform
+                    this.analyser.getByteTimeDomainData(dataArray);
+                    this.ctx.lineWidth = 4;
+                    this.ctx.strokeStyle = '#00ff88';
+                    this.ctx.beginPath();
+                    
+                    const sliceWidth = w * 1.0 / bufferLength;
+                    let x = 0;
+                    
+                    for(let i = 0; i < bufferLength; i++) {
+                        const v = dataArray[i] / 128.0;
+                        const y = v * h / 2;
+                        
+                        if(i === 0) this.ctx.moveTo(x, y);
+                        else this.ctx.lineTo(x, y);
+                        
+                        x += sliceWidth;
+                    }
+                    this.ctx.stroke();
+                }
+            }
+        }
+
+         * UI MANAGER & INITIALIZATION
+         */
+        const audio = new AudioEngine();
+        const viz = new Visualizer('mainCanvas', audio.analyser);
+        viz.draw();
+
+        // Elements
+        const fileInput = document.getElementById('fileInput');
+        const trackName = document.getElementById('uiTrackName');
+                // --- Event Listeners ---
+
+        // File Loading
+        document.getElementById('btnUpload').onclick = () => fileInput.click();
+        
+        fileInput.onchange = async (e) => {
+            if(e.target.files[0]) handleFile(e.target.files[0]);
         };
 
-        // Инициализация аудио
-        function initAudio() {
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioContext.createAnalyser();
-                gainNode = audioContext.createGain();
-                distortionNode = audioContext.createWaveShaper();
-                filterNode = audioContext.createBiquadFilter();
-                
-                analyser.fftSize = 512;
-                analyser.smoothingTimeConstant = 0.8;
-                
-                // Настройка искажения для пиксельного эффекта
-                distortionNode.curve = makeDistortionCurve(0);
-                distortionNode.oversample = '4x';
-                
-                // Настройка фильтра
-                filterNode.type = 'lowpass';
-                filterNode.frequency.value = 8000;
-                
-                updateAudioChain();
-            }
-        }
-
-        function updateAudioChain() {
-            if (source) {
-                source.disconnect();
-                source.connect(distortionNode);
-                distortionNode.connect(filterNode);
-                filterNode.connect(gainNode);
-                gainNode.connect(analyser);
-                analyser.connect(audioContext.destination);
-            }
-        }
-
-        function makeDistortionCurve(amount) {
-            const samples = 44100;
-            const curve = new Float32Array(samples);
-            const deg = Math.PI / 180;
-            
-            for (let i = 0; i < samples; i++) {
-                const x = (i * 2) / samples - 1;
-                const distortion = amount * 100;
-                
-                // Пиксельное искажение
-                if (distortion > 0) {
-                    const steps = Math.max(2, 32 - Math.floor(distortion / 3));
-                    curve[i] = Math.floor(x * steps) / steps;
-                } else {
-                    curve[i] = Math.tanh(x * 3);
-                }
-            }
-            
-            return curve;
-        }
-
-        // Загрузка аудиофайла
-        function uploadAudio() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = 'audio/*';
-            
-            input.onchange = async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                currentFile = file;
-                const url = URL.createObjectURL(file);
-                
-                stopAudio();
-                initAudio();
-                
-                audioPlayer.src = url;
-                trackName.textContent = file.name.slice(0, 30) + (file.name.length > 30 ? '...' : '');
-                statusEl.textContent = 'ФАЙЛ ЗАГРУЖЕН';
-                statusEl.style.color = '#00ff88';
-                
-                // Обновляем информацию
-                bitDepthEl.textContent = '8-bit';
-                sampleRateEl.textContent = '22kHz';
-                pixelLevelEl.textContent = 'Pixel: 0%';
-                
-                // Сбрасываем эффекты
-                pixelSlider.value = 0;
-                pixelValue.textContent = '0%';
-                effectSlider.value = 50;
-                effectValue.textContent = 'СРЕДНЯЯ';
-                
-                drawIdleScreen();
-            };
-            
-            input.click();
-        }
-
-        // Воспроизведение
-        async function playAudio() {
-            if (!audioPlayer.src) {
-                statusEl.textContent = 'СНАЧАЛА ЗАГРУЗИТЕ ТРЕК';
-                statusEl.style.color = '#ff4444';
-                return;
-            }
-            
-            if (!isPlaying) {
-                try {
-                    if (audioContext.state === 'suspended') {
-                        await audioContext.resume();
-                    }
-                    
-                    if (!source) {
-                        source = audioContext.createMediaElementSource(audioPlayer);
-                        updateAudioChain();
-                    }
-                    
-                    await audioPlayer.play();
-                    isPlaying = true;
-                    statusEl.textContent = 'ИГРАЕТ...';
-                    statusEl.style.color = '#00ff88';
-                    
-                    // Обновляем громкость
-                    updateVolume();
-                    
-                    // Запускаем визуализацию
-                    visualize();
-                } catch (error) {
-                    statusEl.textContent = 'ОШИБКА ВОСПРОИЗВЕДЕНИЯ';
-                    statusEl.style.color = '#ff4444';
-                    console.error(error);
-                }
-            }
-        }
-
-        // Пауза
-        function pauseAudio() {
-            if (isPlaying) {
-                audioPlayer.pause();
-                isPlaying = false;
-                statusEl.textContent = 'НА ПАУЗЕ';
-                statusEl.style.color = '#ffff00';
-                cancelAnimationFrame(animationId);
-                drawPausedScreen();
-            }
-        }
-
-        // Остановка
-        function stopAudio() {
-            if (audioPlayer) {
-                audioPlayer.pause();
-                audioPlayer.currentTime = 0;
-                isPlaying = false;
-                statusEl.textContent = 'ОСТАНОВЛЕНО';
-                statusEl.style.color = '#ff4444';
-            }
-            
-            if (source) {
-                source.disconnect();
-                source = null;
-            }
-            
-            cancelAnimationFrame(animationId);
-            drawIdleScreen();
-        }
-
-        // Применение пиксельного эффекта
-        function applyPixelEffect() {
-            pixelizationLevel = parseInt(pixelSlider.value);
-            effectLevel = parseInt(effectSlider.value);
-            
-            // Применяем эффекты к аудио
-            if (distortionNode) {
-                distortionNode.curve = makeDistortionCurve(pixelizationLevel / 100);
-            }
-            
-            if (filterNode) {
-                // Уменьшаем частоту среза при большом уровне пикселизации
-                filterNode.frequency.value = 8000 - (pixelizationLevel * 70);
-            }
-            
-            // Обновляем информацию
-            pixelLevelEl.textContent = `Pixel: ${pixelizationLevel}%`;
-            
-            const bitDepth = 16 - Math.floor(pixelizationLevel / 6.4);
-            bitDepthEl.textContent = `${bitDepth}-bit`;
-            
-            const sampleRate = Math.max(8, 44 - Math.floor(pixelizationLevel / 3));
-            sampleRateEl.textContent = `${sampleRate}kHz`;
-            
-            statusEl.textContent = `ПИКСЕЛИЗАЦИЯ: ${pixelizationLevel}%`;
-            statusEl.style.color = '#9900ff';
-        }
-
-        // Сброс эффектов
-        function resetEffects() {
-            pixelSlider.value = 0;
-            pixelValue.textContent = '0%';
-            effectSlider.value = 50;
-            effectValue.textContent = 'СРЕДНЯЯ';
-            
-            pixelizationLevel = 0;
-            effectLevel = 50;
-            
-            if (distortionNode) {
-                distortionNode.curve = makeDistortionCurve(0);
-            }
-            
-            if (filterNode) {
-                filterNode.frequency.value = 8000;
-            }
-            
-            pixelLevelEl.textContent = 'Pixel: 0%';
-            bitDepthEl.textContent = '16-bit';
-            sampleRateEl.textContent = '44.1kHz';
-            
-            statusEl.textContent = 'ЭФФЕКТЫ СБРОШЕНЫ';
-            statusEl.style.color = '#00ffff';
-        }
-
-        // Обновление громкости
-        function updateVolume() {
-            const volume = parseInt(volumeSlider.value) / 100;
-            volumeValue.textContent = `${parseInt(volumeSlider.value)}%`;
-            
-            if (gainNode) {
-                gainNode.gain.value = volume;
-            }
-            
-            audioPlayer.volume = volume;
-        }
-
-                // Визуализация
-        function visualize() {
-            if (!isPlaying || !analyser) {
-                return;
-            }
-            
-            const bufferLength = analyser.frequencyBinCount;
-            const dataArray = new Uint8Array(bufferLength);
-            const timeArray = new Uint8Array(bufferLength);
-            
-            analyser.getByteFrequencyData(dataArray);
-            analyser.getByteTimeDomainData(timeArray);
-            
-            // Очищаем канвас
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем в зависимости от режима
-            if (vizMode === 0) {
-                drawSpectrum(dataArray, bufferLength);
-            } else if (vizMode === 1) {
-                drawWaveform(timeArray, bufferLength);
-            } else {
-                drawParticles(dataArray, timeArray, bufferLength);
-            }
-            
-            // Рисуем пиксельную сетку
-            drawPixelGrid();
-            
-            // Рисуем информационную панель
-            drawInfoOverlay();
-            
-            animationId = requestAnimationFrame(visualize);
-        }
-
-        function drawSpectrum(dataArray, bufferLength) {
-            const barWidth = 6;
-            const spacing = 2;
-            let x = 0;
-            
-            // Цветовая схема в зависимости от уровня пикселизации
-            const hue = 200 + pixelizationLevel;
-            
-            for (let i = 0; i < bufferLength; i += 2) {
-                const value = dataArray[i];
-                
-                // Вычисляем высоту с эффектом пикселизации
-                const pixelHeight = Math.floor(value / 8) * 8;
-                const barHeight = Math.max(4, pixelHeight / 2);
-                
-                // Градиентный цвет
-                const saturation = 70 + (value / 255 * 30);
-                const lightness = 40 + (value / 255 * 20);
-                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                
-                // Рисуем столбик
-                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
-                
-                // Пиксельный эффект
-                if (pixelizationLevel > 30) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                    for (let j = 0; j < barWidth; j += 2) {
-                        ctx.fillRect(x + j, canvas.height - barHeight, 1, 1);
-                    }
-                }
-                
-                x += barWidth + spacing;
-                if (x >= canvas.width) break;
-            }
-        }
-
-        function drawWaveform(timeArray, bufferLength) {
-            ctx.beginPath();
-            ctx.lineWidth = 3;
-            ctx.strokeStyle = `hsl(${280 + pixelizationLevel}, 80%, 60%)`;
-            
-            const sliceWidth = canvas.width / bufferLength;
-            let x = 0;
-            
-            for (let i = 0; i < bufferLength; i++) {
-                const v = timeArray[i] / 128.0;
-                const y = v * canvas.height / 2;
-                
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-                
-                x += sliceWidth;
-            }
-            
-            ctx.stroke();
-            
-            // Заливка
-            ctx.lineTo(canvas.width, canvas.height / 2);
-            ctx.lineTo(0, canvas.height / 2);
-            ctx.closePath();
-            ctx.fillStyle = `hsla(${280 + pixelizationLevel}, 60%, 30%, 0.3)`;
-            ctx.fill();
-        }
-
-        function drawParticles(freqArray, timeArray, bufferLength) {
-            const particleCount = 100 + Math.floor(pixelizationLevel / 2);
-            
-            for (let i = 0; i < particleCount; i++) {
-                const index = i % bufferLength;
-                const freqValue = freqArray[index];
-                const timeValue = timeArray[index];
-                
-                const x = (i / particleCount) * canvas.width;
-                const y = canvas.height / 2 + (timeValue - 128) * 1.5;
-                
-                const size = 2 + (freqValue / 255 * 6);
-                const hue = (i * 3 + pixelizationLevel) % 360;
-                
-                ctx.fillStyle = `hsla(${hue}, 100%, 60%, 0.8)`;
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Пиксельный эффект
-                if (pixelizationLevel > 50) {
-                    ctx.fillStyle = `hsla(${(hue + 180) % 360}, 100%, 80%, 0.4)`;
-                    ctx.fillRect(Math.floor(x) - 1, Math.floor(y) - 1, 2, 2);
-                }
-            }
-        }
-
-        function drawPixelGrid() {
-            const gridSize = 16 - Math.floor(pixelizationLevel / 10);
-            
-            ctx.strokeStyle = 'rgba(0, 255, 255, 0.1)';
-            ctx.lineWidth = 1;
-            
-            // Вертикальные линии
-            for (let x = 0; x < canvas.width; x += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(x, 0);
-                ctx.lineTo(x, canvas.height);
-                ctx.stroke();
-            }
-            
-            // Горизонтальные линии
-            for (let y = 0; y < canvas.height; y += gridSize) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-        }
-
-        function drawInfoOverlay() {
-            // Информация о режиме
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(10, 10, 150, 40);
-            
-            ctx.fillStyle = '#00ff88';
-            ctx.font = '12px "Press Start 2P"';
-            ctx.fillText('PIXELSOUND', 15, 25);
-            
-            ctx.fillStyle = '#00ffff';
-            ctx.font = '10px "Press Start 2P"';
-            const modes = ['СПЕКТР', 'ВОЛНА', 'ЧАСТИЦЫ'];
-            ctx.fillText(`РЕЖИМ: ${modes[vizMode]}`, 15, 40);
-        }
-
-        function drawIdleScreen() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Рисуем пиксельный логотип
-            ctx.fillStyle = '#00ff88';
-            ctx.font = '24px "Press Start 2P"';
-            ctx.textAlign = 'center';
-            ctx.fillText('PIXEL', canvas.width/2, canvas.height/2 - 20);
-            ctx.fillText('SOUND', canvas.width/2, canvas.height/2 + 10);
-            
-            // Анимированные пиксели
-            const time = Date.now() / 1000;
-            for (let i = 0; i < 20; i++) {
-                const x = (Math.sin(time + i) * 0.5 + 0.5) * canvas.width;
-                const y = (Math.cos(time * 0.7 + i) * 0.5 + 0.5) * canvas.height;
-                
-                ctx.fillStyle = `hsl(${(i * 36 + time * 50) % 360}, 100%, 60%)`;
-                ctx.fillRect(Math.floor(x), Math.floor(y), 4, 4);
-            }
-        }
-
-        function drawPausedScreen() {
-            ctx.fillStyle = '#000';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            // Мигающий текст
-            const blink = Math.floor(Date.now() / 500) % 2 === 0;
-            
-            if (blink) {
-                ctx.fillStyle = '#ffff00';
-                ctx.font = '20px "Press Start 2P"';
-                ctx.textAlign = 'center';
-                ctx.fillText('ПАУЗА', canvas.width/2, canvas.height/2);
-            }
-            
-            // Статичные пиксели
-            for (let i = 0; i < 50; i++) {
-                const x = (i * 17) % canvas.width;
-                const y = (i * 13) % canvas.height;
-                
-                ctx.fillStyle = `hsla(${i * 7}, 100%, 50%, 0.3)`;
-                ctx.fillRect(x, y, 3, 3);
-            }
-        }
-
-        // Создание пиксельной клавиатуры
-        function createPiano() {
-            const piano = document.getElementById('piano');
-            const keyLabels = document.getElementById('keyLabels');
-            
-            const whiteKeys = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
-            const blackKeys = ['C#', 'D#', '', 'F#', 'G#', 'A#', ''];
-            
-            // Очищаем клавиатуру
-            piano.innerHTML = '';
-            keyLabels.innerHTML = '';
-            
-            // Создаем белые клавиши
-            for (let i = 0; i < 14; i++) { // 2 октавы
-                const noteIndex = i % 7;
-                const octave = Math.floor(i / 7) + 4;
-                const key = document.createElement('div');
-                key.className = 'piano-key white-key';
-                key.dataset.note = whiteKeys[noteIndex] + octave;
-                key.dataset.frequency = getFrequency(whiteKeys[noteIndex], octave);
-                
-                key.addEventListener('mousedown', () => playPianoNote(key.dataset.frequency));
-                key.addEventListener('mouseup', () => stopPianoNote());
-                key.addEventListener('mouseleave', () => stopPianoNote());
-                
-                piano.appendChild(key);
-                
-                // Надпись для каждой клавиши (только для первой октавы)
-                if (i < 7) {
-                    const label = document.createElement('div');
-                    label.className = 'key-label';
-                    label.textContent = whiteKeys[noteIndex];
-                    keyLabels.appendChild(label);
-                }
-            }
-            
-            // Создаем черные клавиши
-            for (let i = 0; i < 14; i++) {
-                const noteIndex = i % 7;
-                if (blackKeys[noteIndex]) {
-                    const octave = Math.floor(i / 7) + 4;
-                    const key = document.createElement('div');
-                    key.className = 'piano-key black-key';
-                    key.dataset.note = blackKeys[noteIndex] + octave;
-                    key.dataset.frequency = getFrequency(blackKeys[noteIndex], octave);
-                    
-                    key.addEventListener('mousedown', () => playPianoNote(key.dataset.frequency));
-                    key.addEventListener('mouseup', () => stopPianoNote());
-                    key.addEventListener('mouseleave', () => stopPianoNote());
-                    
-                    piano.appendChild(key);
-                    
-                    // Надпись (только для первой октавы)
-                    if (i < 7 && blackKeys[noteIndex]) {
-                        const label = document.createElement('div');
-                        label.className = 'key-label black';
-                        label.textContent = blackKeys[noteIndex].replace('#', '♯');
-                        keyLabels.appendChild(label);
-                    }
-                }
-            }
-        }
-
-        function getFrequency(note, octave) {
-            const notes = {
-                'C': 16.35, 'C#': 17.32, 'D': 18.35, 'D#': 19.45,
-                'E': 20.60, 'F': 21.83, 'F#': 23.12, 'G': 24.50,
-                'G#': 25.96, 'A': 27.50, 'A#': 29.14, 'B': 30.87
-            };
-            
-            return notes[note] * Math.pow(2, octave);
-        }
-
-        let activeOscillator = null;
-
-        function playPianoNote(frequency) {
-            initAudio();
-            
-            if (activeOscillator) {
-                activeOscillator.stop();
-            }
-            
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.type = 'square'; // Пиксельный звук
-            oscillator.frequency.value = frequency;
-            
-            gainNode.gain.value = 0.1 * (parseInt(volumeSlider.value) / 100);
-            
-            // Применяем пиксельные эффекты
-            oscillator.connect(distortionNode);
-            distortionNode.connect(filterNode);
-            filterNode.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.start();
-            activeOscillator = oscillator;
-            
-            // Подсвечиваем клавишу
-            const key = document.querySelector(`.piano-key[data-frequency="${frequency}"]`);
-            if (key) key.classList.add('active');
-        }
-
-        function stopPianoNote() {
-            if (activeOscillator) {
-                activeOscillator.stop();
-                activeOscillator = null;
-            }
-            
-            // Снимаем подсветку со всех клавиш
-            document.querySelectorAll('.piano-key.active').forEach(key => {
-                key.classList.remove('active');
+        // Drag & Drop
+        const body = document.body;
+        ['dragenter', 'dragover'].forEach(eventName => {
+            body.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                body.classList.add('drag-active');
             });
-        }
-
-        function playDemo() {
-            const demoNotes = [
-                261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25
-            ];
-            
-            let i = 0;
-            const playNextNote = () => {
-                if (i < demoNotes.length) {
-                    playPianoNote(demoNotes[i]);
-                    i++;
-                    setTimeout(() => {
-                        stopPianoNote();
-                        setTimeout(playNextNote, 200);
-                    }, 300);
-                }
-            };
-            
-            playNextNote();
-        }
-
-        // События слайдеров
-        volumeSlider.addEventListener('input', () => {
-            volumeValue.textContent = `${volumeSlider.value}%`;
-            updateVolume();
         });
 
-        pixelSlider.addEventListener('input', () => {
-            pixelValue.textContent = `${pixelSlider.value}%`;
-            applyPixelEffect();
+        ['dragleave', 'drop'].forEach(eventName => {
+            body.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                body.classList.remove('drag-active');
+            });
         });
 
-        effectSlider.addEventListener('input', () => {
-            const value = parseInt(effectSlider.value);
-            effectValue.textContent = value < 33 ? 'НИЗКАЯ' : value < 66 ? 'СРЕДНЯЯ' : 'ВЫСОКАЯ';
-            applyPixelEffect();
-        });
-
-        // Смена режима визуализации по клику на canvas
-        canvas.addEventListener('click', () => {
-            vizMode = (vizMode + 1) % 3;
-            const modes = ['СПЕКТР', 'ВОЛНА', 'ЧАСТИЦЫ'];
-            vizModeEl.textContent = `РЕЖИМ: ${modes[vizMode]}`;
-        });
-
-        // Инициализация при загрузке
-        window.addEventListener('load', () => {
-            initAudio();
-            createPiano();
-            drawIdleScreen();
-            
-            // Обновляем значения
-            updateVolume();
-            
-            // Запускаем анимацию заглушки
-            function animateIdle() {
-                if (!isPlaying) {
-                    drawIdleScreen();
-                    requestAnimationFrame(animateIdle);
-                }
-            }
-            animateIdle();
-        });
-
-        // Обработка клавиатуры
-        document.addEventListener('keydown', (e) => {
-            const keyMap = {
-                ' ': () => isPlaying ? pauseAudio() : playAudio(),
-                'Escape': stopAudio,
-                'p': applyPixelEffect,
-                'r': resetEffects,
-                'v': () => canvas.click(),
-                '1': () => volumeSlider.value = Math.min(100, parseInt(volumeSlider.value) + 10),
-                '2': () => volumeSlider.value = Math.max(0, parseInt(volumeSlider.value) - 10)
-            };
-            
-            if (keyMap[e.key]) {
-                keyMap[e.key]();
-                if (e.key !== ' ') e.preventDefault();
+        body.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files[0] && files[0].type.startsWith('audio')) {
+                handleFile(files[0]);
             }
         });
+
+        async function handleFile(file) {
+            trackName.textContent = "LOADING...";
+            try {
+                await audio.loadFile(file);
+                trackName.textContent = file.name.toUpperCase();
+                document.getElementById('btnPlay').click(); // Auto play
+            } catch (err) {
+                trackName.textContent = "ERROR LOADING";
+                console.error(err);
+            }
+        }
+
+        // Playback Controls
+        document.getElementById('btnPlay').onclick = () => {
+            audio.play();
+            updateStats();
+        };
+        document.getElementById('btnStop').onclick = () => audio.stop();
+        document.getElementById('btnMode').onclick = () => viz.toggleMode();
+
+        // Sliders
+        const volSlider = document.getElementById('volSlider');
+        const bitSlider = document.getElementById('bitSlider');
+        const rateSlider = document.getElementById('rateSlider');
+
+        function updateParams() {
+            const vol = volSlider.value / 100;
+            const bits = parseInt(bitSlider.value);
+            const rate = parseInt(rateSlider.value);
+            
+            audio.setVolume(vol);
+            audio.updateEffects(bits, rate);
+            updateStats();
+        }
+
+        [volSlider, bitSlider, rateSlider].forEach(el => {
+            el.addEventListener('input', updateParams);
+        });
+
+        function updateStats() {
+            document.getElementById('uiBitDepth').textContent = `${bitSlider.value}-BIT`;
+            // Calculate effective Hz roughly
+            const effectiveHz = Math.floor(44100 / rateSlider.value);
+            document.getElementById('uiSampleRate').textContent = `${effectiveHz}HZ`;
+        }
+
+        // Piano Generator
+        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const pianoContainer = document.getElementById('pianoContainer');
+        
+        // Generate 1.5 octaves starting from C4
+        for(let i=0; i<20; i++) {
+            const noteIndex = i % 12;
+            const octave = 4 + Math.floor(i / 12);
+            const isBlack = notes[noteIndex].includes('#');
+            const noteName = notes[noteIndex];
+            
+            const key = document.createElement('div');
+            key.className = `key key-${isBlack ? 'black' : 'white'}`;
+            
+            // Calculate Frequency: f = 440 * 2^((n-69)/12)
+            // A4 is index 69 (MIDI). Our loop starts C4 (MIDI 60)
+            const midi = 60 + i;
+            const freq = 440 * Math.pow(2, (midi - 69) / 12);
+            
+            key.onmousedown = () => {
+                key.classList.add('active');
+                audio.playTone(freq);
+            };
+            key.onmouseup = () => key.classList.remove('active');
+            key.onmouseleave = () => key.classList.remove('active');
+            
+            pianoContainer.appendChild(key);
+        }
     </script>
 </body>
 </html>
