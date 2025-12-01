@@ -500,18 +500,28 @@
                 }
             }
             
-            seek(time) {
-                const seekTime = Math.max(0, Math.min(time, this.duration));
-                
-                if (this.isPlaying) {
-                    this.source.stop();
-                    this.source.disconnect();
-                    this.startPlayback(seekTime);
-                } else {
-                    this.pauseTime = seekTime;
-                    updateTimeDisplay();
-                }
-            }
+seek(time) {
+    const seekTime = Math.max(0, Math.min(time, this.duration));
+    
+    // Останавливаем текущее воспроизведение
+    if (this.source) {
+        try {
+            this.source.stop();
+            this.source.disconnect();
+        } catch(e) {}
+        this.source = null;
+    }
+    
+    this.pauseTime = seekTime;
+    
+    // Если трек должен продолжать играть
+    if (this.isPlaying) {
+        this.startPlayback(seekTime);
+    } else {
+        // Просто обновляем время паузы
+        updateTimeDisplay();
+    }
+}
             
             getCurrentTime() {
                 if (!this.isPlaying) return this.pauseTime;
@@ -610,19 +620,61 @@
             }
         }
         
-        // Перемотка
-        progressBar.addEventListener('click', (e) => {
-            if (!audio.currentBuffer) return;
-            
-            const rect = progressBar.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const percent = Math.max(0, Math.min(clickX / rect.width, 1));
-            const seekTime = percent * audio.duration;
-            
-            audio.seek(seekTime);
-            updateTimeDisplay();
-        });
+// Перемотка
+let isSeeking = false;
 
+progressBar.addEventListener('mousedown', (e) => {
+    isSeeking = true;
+    handleSeek(e);
+});
+
+document.addEventListener('mousemove', (e) => {
+    if (isSeeking) {
+        handleSeek(e);
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    if (isSeeking) {
+        isSeeking = false;
+        // После отпускания мыши - возобновляем воспроизведение, если оно было
+        if (audio.currentBuffer && !audio.isPlaying && audio.pauseTime > 0) {
+            audio.resume();
+            updatePlayButton(true);
+        }
+    }
+});
+
+progressBar.addEventListener('click', (e) => {
+    handleSeek(e);
+});
+
+function handleSeek(e) {
+    if (!audio.currentBuffer) return;
+    
+    const rect = progressBar.getBoundingClientRect();
+    const clickX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+    const percent = clickX / rect.width;
+    const seekTime = percent * audio.duration;
+    
+    // Запоминаем, играл ли трек до перемотки
+    const wasPlaying = audio.isPlaying;
+    
+    // Ставим на паузу во время перемотки
+    if (audio.isPlaying) {
+        audio.pause();
+    }
+    
+    audio.seek(seekTime);
+    
+    // Если трек играл и это не удерживание мыши (быстрый клик), продолжаем
+    if (wasPlaying && !isSeeking) {
+        audio.resume();
+        updatePlayButton(true);
+    }
+    
+    updateTimeDisplay();
+}
         // Обработка файлов
         function handleFiles(files) {
             if (playlist.length === 0) playlistEl.innerHTML = '';
@@ -833,6 +885,30 @@
             updateParams();
         });
 
+// Touch события для мобильных
+progressBar.addEventListener('touchstart', (e) => {
+    isSeeking = true;
+    handleSeek(e.touches[0]);
+    e.preventDefault();
+});
+
+document.addEventListener('touchmove', (e) => {
+    if (isSeeking) {
+        handleSeek(e.touches[0]);
+        e.preventDefault();
+    }
+});
+
+document.addEventListener('touchend', () => {
+    if (isSeeking) {
+        isSeeking = false;
+        if (audio.currentBuffer && !audio.isPlaying && audio.pauseTime > 0) {
+            audio.resume();
+            updatePlayButton(true);
+        }
+    }
+});
+        
     </script>
 </body>
 </html>
