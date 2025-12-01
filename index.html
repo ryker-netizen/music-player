@@ -39,12 +39,14 @@
             flex: 1;
         }
 
-        /* === ЛОГОТИП (ВОЗВРАЩЕНИЕ) === */
+        /* === ЛОГОТИП С ЛЕТАЮЩИМИ ПАРТИКЛАМИ === */
         .header {
             text-align: center;
             margin-bottom: 30px;
             position: relative;
             padding: 30px 0;
+            overflow: hidden;
+            min-height: 180px;
         }
 
         .title {
@@ -57,13 +59,8 @@
                 4px 4px 0 var(--pixel-purple),
                 8px 8px 0 rgba(0, 0, 0, 0.5);
             line-height: 1.3;
-            animation: glitch 3s infinite;
-        }
-
-        @keyframes glitch {
-            0% { text-shadow: 4px 4px 0 var(--pixel-purple); }
-            50% { text-shadow: -4px 4px 0 var(--pixel-pink); }
-            100% { text-shadow: 4px 4px 0 var(--pixel-purple); }
+            position: relative;
+            z-index: 2;
         }
 
         .subtitle {
@@ -74,6 +71,30 @@
             display: inline-block;
             padding: 5px 10px;
             border: 2px solid var(--pixel-gray);
+            position: relative;
+            z-index: 2;
+        }
+
+        /* Контейнер для частиц логотипа */
+        .particles-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .pixel-particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--pixel-cyan);
+            border-radius: 0;
+            box-shadow: 
+                0 0 5px var(--pixel-cyan),
+                0 0 10px var(--pixel-blue);
         }
 
         /* === ПЛЕЕР === */
@@ -101,7 +122,7 @@
         .track-info {
             display: flex; justify-content: space-between; align-items: center;
             background: rgba(0,0,0,0.6); padding: 12px; border: 2px solid var(--pixel-gray);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         .track-name { 
             color: var(--pixel-yellow); font-family: 'Press Start 2P'; font-size: 0.7rem; 
@@ -109,6 +130,47 @@
         }
         .track-status { color: var(--pixel-red); font-size: 0.7rem; display: none; animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0; } }
+
+        /* Прогресс бар */
+        .progress-container {
+            margin-bottom: 20px;
+        }
+        
+        .time-display {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            color: var(--pixel-cyan);
+            font-size: 0.8rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--pixel-dark);
+            border: 3px solid var(--pixel-gray);
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pixel-blue), var(--pixel-purple));
+            width: 0%;
+            position: relative;
+            transition: width 0.1s;
+        }
+        
+        .progress-knob {
+            position: absolute;
+            right: -8px;
+            top: -2px;
+            width: 16px;
+            height: 16px;
+            background: var(--pixel-cyan);
+            border: 3px solid #000;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.5);
+        }
 
         /* Ползунки */
         .controls { display: grid; gap: 18px; margin-bottom: 25px; }
@@ -142,7 +204,7 @@
         .btn-rec { background: var(--pixel-pink); }
         .btn-rec.recording { background: #fff; color: #f00; border-color: #f00; }
 
-        /* === ПЛЕЙЛИСТ (НОВОЕ) === */
+        /* === ПЛЕЙЛИСТ === */
         .playlist-box {
             background: rgba(10, 10, 20, 0.9);
             border: 4px solid var(--pixel-gray);
@@ -172,13 +234,13 @@
             font-family: 'Press Start 2P'; font-size: 0.7rem;
         }
 
-        /* === ФУТЕР (НОВОЕ) === */
+        /* === ФУТЕР === */
         .footer {
             text-align: center; margin-top: 40px; padding: 20px 0;
             border-top: 4px solid var(--pixel-gray);
-            color: var(--pixel-gray); font-size: 0.8rem;
+            color: var(--pixel-yellow); font-size: 1rem;
+            font-family: 'Press Start 2P';
         }
-        .footer span { color: var(--pixel-yellow); }
 
         /* Drop Zone */
         .drop-overlay {
@@ -204,6 +266,7 @@
 
     <div class="container">
         <header class="header">
+            <div class="particles-container" id="particlesContainer"></div>
             <h1 class="title">PixelSound</h1>
             <div class="subtitle">RETRO AUDIO PROCESSOR</div>
         </header>
@@ -216,6 +279,18 @@
             <div class="track-info">
                 <div class="track-name" id="trackName">ПЛЕЙЛИСТ ПУСТ</div>
                 <div class="track-status" id="recStatus">● ЗАПИСЬ</div>
+            </div>
+
+            <!-- ПОЛЗУНОК ВРЕМЕНИ -->
+            <div class="progress-container">
+                <div class="time-display">
+                    <span id="currentTime">0:00</span>
+                    <span id="totalTime">0:00</span>
+                </div>
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                    <div class="progress-knob" id="progressKnob"></div>
+                </div>
             </div>
 
             <div class="controls">
@@ -259,25 +334,22 @@
         </div>
 
         <footer class="footer">
-            <div>PIXELSOUND ULTIMATE © 2025</div>
-            <div style="margin-top: 10px; font-size: 0.6rem;">MADE FOR <span>RETRO LOVERS</span></div>
+            <div>@Dicko1Prim @ 2025</div>
         </footer>
     </div>
 
     <input type="file" id="fileInput" accept="audio/*" multiple style="display:none">
 
     <script>
-        // === 1. AUDIO WORKLET (РЕШЕНИЕ ПРОБЛЕМЫ С ЗАВИСАНИЕМ) ===
-        // Мы создаем код процессора внутри строки и делаем из него Blob, 
-        // чтобы не создавать отдельный файл .js
+        // === 1. AUDIO WORKLET ===
         const workletCode = `
             class BitCrusherProcessor extends AudioWorkletProcessor {
                 constructor() {
                     super();
                     this.bitDepth = 16;
                     this.sampleFactor = 1;
-                    this._phasor = 0;
                     this._lastSample = 0;
+                    this._sampleCounter = 0;
                 }
 
                 static get parameterDescriptors() {
@@ -291,30 +363,25 @@
                     const input = inputs[0];
                     const output = outputs[0];
                     
-                    // Получаем параметры (они могут меняться в реальном времени)
-                    const bitDepth = parameters.bitDepth.length > 1 ? parameters.bitDepth[0] : parameters.bitDepth[0]; 
-                    const sampleFactor = parameters.sampleFactor.length > 1 ? parameters.sampleFactor[0] : parameters.sampleFactor[0];
-
-                    const step = Math.pow(0.5, bitDepth);
-
-                    for (let channel = 0; channel < input.length; ++channel) {
-                        const inputChannel = input[channel];
+                    if (!input || !input[0]) return true;
+                    
+                    const bitDepth = parameters.bitDepth[0];
+                    const sampleFactor = Math.max(1, Math.floor(parameters.sampleFactor[0]));
+                    
+                    const step = Math.pow(2, 16 - bitDepth) / 32768;
+                    
+                    for (let channel = 0; channel < output.length; channel++) {
+                        const inputChannel = input[channel] || input[0];
                         const outputChannel = output[channel];
                         
-                        // Если каналов нет, выходим
-                        if (!inputChannel) continue;
-
-                        for (let i = 0; i < inputChannel.length; ++i) {
-                            // Логика Downsampling (понижение частоты)
-                            // Мы обновляем сэмпл только если счетчик делится на фактор
-                            // Так как это Worklet, нам нужен глобальный счетчик или локальный для блока
-                            // Для простоты используем i + globalTime (но в worklet это frame)
+                        for (let i = 0; i < outputChannel.length; i++) {
+                            this._sampleCounter++;
                             
-                            // Упрощенная логика sample-hold внутри буфера
-                            if ((currentFrame + i) % Math.floor(sampleFactor) === 0) {
-                                let sample = inputChannel[i];
+                            // Обновляем семпл только каждый sampleFactor раз
+                            if (this._sampleCounter % sampleFactor === 0) {
+                                let sample = inputChannel[i] || 0;
                                 
-                                // Логика Bitcrushing
+                                // Применяем биткраш
                                 if (bitDepth < 16) {
                                     sample = Math.floor(sample / step) * step;
                                 }
@@ -324,6 +391,7 @@
                             outputChannel[i] = this._lastSample;
                         }
                     }
+                    
                     return true;
                 }
             }
@@ -333,7 +401,7 @@
         const workletBlob = new Blob([workletCode], { type: 'application/javascript' });
         const workletUrl = URL.createObjectURL(workletBlob);
 
-        // === 2. AUDIO ENGINE ===
+        // === 2. AUDIO ENGINE С ПЕРЕМОТКОЙ ===
         class AudioEngine {
             constructor() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -342,24 +410,26 @@
                 this.gainNode = this.ctx.createGain();
                 this.analyser = this.ctx.createAnalyser();
                 this.mediaRecorder = null;
-                this.dest = this.ctx.createMediaStreamDestination(); // Для записи
+                this.dest = this.ctx.createMediaStreamDestination();
                 
                 this.analyser.fftSize = 256;
                 this.isReady = false;
+                this.currentBuffer = null;
+                this.isPlaying = false;
+                this.startTime = 0;
+                this.pauseTime = 0;
+                this.duration = 0;
+                this.timeUpdateInterval = null;
 
-                // Загружаем модуль
                 this.ctx.audioWorklet.addModule(workletUrl).then(() => {
                     this.workletNode = new AudioWorkletNode(this.ctx, 'bit-crusher-processor');
                     
-                    // Цепочка: Worklet -> Gain -> Analyser -> Speakers
-                    //                      |-> Recorder Destination
                     this.workletNode.connect(this.gainNode);
                     this.gainNode.connect(this.analyser);
                     this.analyser.connect(this.ctx.destination);
-                    this.gainNode.connect(this.dest); // Подключаем к выходу записи
+                    this.gainNode.connect(this.dest);
                     
                     this.isReady = true;
-                    console.log("Audio Engine Ready");
                 }).catch(e => console.error("Worklet Error:", e));
             }
 
@@ -368,22 +438,99 @@
                 if (!this.isReady) return;
 
                 this.stop();
-
-                const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+                
+                this.currentBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+                this.duration = this.currentBuffer.duration;
+                
+                this.startPlayback(0);
+            }
+            
+            startPlayback(startTime = 0) {
+                if (!this.currentBuffer) return;
+                
                 this.source = this.ctx.createBufferSource();
-                this.source.buffer = audioBuffer;
-                this.source.loop = true; // Зацикливаем для удобства
-
-                // Подключаем Source -> Worklet
+                this.source.buffer = this.currentBuffer;
+                this.source.loop = false;
+                
                 this.source.connect(this.workletNode);
-                this.source.start(0);
+                this.source.start(0, startTime);
+                
+                this.startTime = this.ctx.currentTime - startTime;
+                this.isPlaying = true;
+                
+                // Когда трек закончится
+                this.source.onended = () => {
+                    this.isPlaying = false;
+                    updatePlayButton(false);
+                };
+                
+                // Запускаем обновление времени
+                this.startTimeUpdate();
             }
 
             stop() {
+                this.stopTimeUpdate();
+                
                 if (this.source) {
-                    try { this.source.stop(); } catch(e){}
+                    try { 
+                        this.source.stop();
+                        this.source.disconnect();
+                    } catch(e){}
+                    this.source = null;
+                }
+                
+                this.isPlaying = false;
+                this.pauseTime = 0;
+            }
+            
+            pause() {
+                if (this.source && this.isPlaying) {
+                    this.pauseTime = this.getCurrentTime();
+                    this.source.stop();
                     this.source.disconnect();
                     this.source = null;
+                    this.isPlaying = false;
+                    this.stopTimeUpdate();
+                }
+            }
+            
+            resume() {
+                if (this.currentBuffer && !this.isPlaying) {
+                    this.startPlayback(this.pauseTime);
+                }
+            }
+            
+            seek(time) {
+                const seekTime = Math.max(0, Math.min(time, this.duration));
+                
+                if (this.isPlaying) {
+                    this.source.stop();
+                    this.source.disconnect();
+                    this.startPlayback(seekTime);
+                } else {
+                    this.pauseTime = seekTime;
+                    updateTimeDisplay();
+                }
+            }
+            
+            getCurrentTime() {
+                if (!this.isPlaying) return this.pauseTime;
+                return Math.min(this.ctx.currentTime - this.startTime, this.duration);
+            }
+            
+            startTimeUpdate() {
+                this.stopTimeUpdate();
+                this.timeUpdateInterval = setInterval(() => {
+                    if (this.isPlaying) {
+                        updateTimeDisplay();
+                    }
+                }, 100);
+            }
+            
+            stopTimeUpdate() {
+                if (this.timeUpdateInterval) {
+                    clearInterval(this.timeUpdateInterval);
+                    this.timeUpdateInterval = null;
                 }
             }
 
@@ -391,22 +538,20 @@
                 if (!this.isReady) return;
                 this.gainNode.gain.value = vol;
                 
-                // Передаем параметры в Worklet
                 const bitParam = this.workletNode.parameters.get('bitDepth');
                 const rateParam = this.workletNode.parameters.get('sampleFactor');
                 
-                bitParam.setValueAtTime(bits, this.ctx.currentTime);
-                rateParam.setValueAtTime(rate, this.ctx.currentTime);
+                if (bitParam) bitParam.setValueAtTime(bits, this.ctx.currentTime);
+                if (rateParam) rateParam.setValueAtTime(rate, this.ctx.currentTime);
             }
 
-            // Логика записи
             startRecording() {
                 this.chunks = [];
                 this.mediaRecorder = new MediaRecorder(this.dest.stream);
                 
                 this.mediaRecorder.ondataavailable = (e) => this.chunks.push(e.data);
                 this.mediaRecorder.onstop = () => {
-                    const blob = new Blob(this.chunks, { 'type' : 'audio/wav; codecs=MS_PCM' });
+                    const blob = new Blob(this.chunks, { 'type' : 'audio/wav' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
@@ -434,15 +579,52 @@
         const playlistEl = document.getElementById('playlist');
         const trackNameEl = document.getElementById('trackName');
         const fileInput = document.getElementById('fileInput');
+        const currentTimeEl = document.getElementById('currentTime');
+        const totalTimeEl = document.getElementById('totalTime');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
         
         // Кнопки
         const btnPlay = document.getElementById('btnPlay');
         const btnRec = document.getElementById('btnRec');
         const recStatus = document.getElementById('recStatus');
 
+        // Функции времени
+        function formatTime(seconds) {
+            if (isNaN(seconds) || !isFinite(seconds)) return "0:00";
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+        }
+        
+        function updateTimeDisplay() {
+            if (audio.currentBuffer) {
+                const current = audio.getCurrentTime();
+                const total = audio.duration;
+                
+                currentTimeEl.textContent = formatTime(current);
+                totalTimeEl.textContent = formatTime(total);
+                
+                const percent = (current / total) * 100;
+                progressFill.style.width = Math.min(100, percent) + '%';
+            }
+        }
+        
+        // Перемотка
+        progressBar.addEventListener('click', (e) => {
+            if (!audio.currentBuffer) return;
+            
+            const rect = progressBar.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const percent = Math.max(0, Math.min(clickX / rect.width, 1));
+            const seekTime = percent * audio.duration;
+            
+            audio.seek(seekTime);
+            updateTimeDisplay();
+        });
+
         // Обработка файлов
         function handleFiles(files) {
-            // Если плейлист был пуст, очищаем заглушку
             if (playlist.length === 0) playlistEl.innerHTML = '';
 
             Array.from(files).forEach(file => {
@@ -450,9 +632,8 @@
                 addTrackToUI(file, playlist.length - 1);
             });
 
-            // Если ничего не играло, запускаем первый загруженный
             if (currentTrackIndex === -1 && playlist.length > 0) {
-                loadTrack(playlist.length - files.length); // индекс первого добавленного
+                loadTrack(playlist.length - files.length);
             }
         }
 
@@ -467,18 +648,17 @@
         function loadTrack(index) {
             if (index < 0 || index >= playlist.length) return;
             
-            // UI Обновление
             document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
             playlistEl.children[index].classList.add('active');
             
             currentTrackIndex = index;
             trackNameEl.textContent = playlist[index].name;
             
-            // Чтение файла
             const reader = new FileReader();
             reader.onload = (e) => {
                 audio.playTrack(e.target.result);
                 updatePlayButton(true);
+                updateTimeDisplay();
             };
             reader.readAsArrayBuffer(playlist[index]);
         }
@@ -489,11 +669,12 @@
         btnPlay.onclick = () => {
             if (audio.ctx.state === 'suspended') audio.ctx.resume();
             if (currentTrackIndex === -1 && playlist.length > 0) loadTrack(0);
-            else if (audio.source) {
-                 audio.stop(); // Это пауза по сути (стоп)
+            else if (audio.isPlaying) {
+                 audio.pause();
                  updatePlayButton(false);
-            } else if (currentTrackIndex !== -1) {
-                 loadTrack(currentTrackIndex); // Рестарт
+            } else {
+                 audio.resume();
+                 updatePlayButton(true);
             }
         };
 
@@ -555,7 +736,6 @@
         function draw() {
             requestAnimationFrame(draw);
             
-            // Адаптация размера
             if (canvas.width !== canvas.offsetWidth) {
                 canvas.width = canvas.offsetWidth;
                 canvas.height = canvas.offsetHeight;
@@ -577,14 +757,12 @@
             for (let i = 0; i < bufferLength; i++) {
                 const barHeight = (data[i] / 255) * h;
                 
-                // Цвет зависит от биткраша (визуальная фишка)
                 const hue = i * 2 + (Date.now() / 20);
                 const saturation = 100;
                 const lightness = 50;
 
                 ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
                 
-                // Рисуем "пиксельные" кирпичики вместо сплошной линии
                 const blockSize = 5;
                 const blocks = Math.floor(barHeight / blockSize);
                 
@@ -597,6 +775,48 @@
         }
         draw();
 
+        // Летающие частицы в логотипе
+        function createParticles() {
+            const container = document.getElementById('particlesContainer');
+            if (!container) return;
+            
+            const colors = ['#00ffff', '#0066ff', '#9900ff', '#ff00ff', '#00ff88'];
+            
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'pixel-particle';
+                
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = Math.random() * 100 + '%';
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.opacity = 0.7 + Math.random() * 0.3;
+                
+                const speed = 0.3 + Math.random() * 1.2;
+                const angle = Math.random() * Math.PI * 2;
+                
+                function animate() {
+                    let x = parseFloat(particle.style.left);
+                    let y = parseFloat(particle.style.top);
+                    
+                    x += Math.cos(angle) * speed;
+                    y += Math.sin(angle) * speed;
+                    
+                    if (x < -10) x = 110;
+                    if (x > 110) x = -10;
+                    if (y < -10) y = 110;
+                    if (y > 110) y = -10;
+                    
+                    particle.style.left = x + '%';
+                    particle.style.top = y + '%';
+                    
+                    requestAnimationFrame(animate);
+                }
+                
+                container.appendChild(particle);
+                animate();
+            }
+        }
+
         // Drag & Drop
         const body = document.body;
         body.addEventListener('dragover', (e) => { e.preventDefault(); body.classList.add('dragging'); });
@@ -605,6 +825,12 @@
             e.preventDefault();
             body.classList.remove('dragging');
             if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+        });
+
+        // Инициализация
+        window.addEventListener('load', () => {
+            createParticles();
+            updateParams();
         });
 
     </script>
