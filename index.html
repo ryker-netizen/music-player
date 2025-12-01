@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пиксельный Музыкальный Проигрыватель</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+
+        h1 {
+            color: #00ff88;
+            text-shadow: 3px 3px 0 #000;
+            font-family: 'Press Start 2P', cursive;
+            margin-bottom: 30px;
+            font-size: 20px;
+        }
+
+        .pixel-player {
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            border: 6px solid #000;
+            background: linear-gradient(45deg, #4a4a4a 0%, #6b6b6b 100%);
+            padding: 25px;
+            width: 320px;
+            margin: 0 auto;
+            box-shadow: 10px 10px 0 rgba(0, 0, 0, 0.5);
+            position: relative;
+        }
+
+        .pixel-player::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            height: 5px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        }
+
+        .pixel-display {
+            background: #000;
+            border: 3px solid #333;
+            padding: 10px;
+            margin-bottom: 20px;
+            min-height: 100px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+            background: #000;
+            width: 100%;
+            height: 120px;
+        }
+
+        .track-info {
+            color: #00ff88;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            margin-top: 10px;
+            text-shadow: 2px 2px 0 #000;
+            height: 30px;
+            overflow: hidden;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .pixel-btn {
+            background: #a0a0a0;
+            border: 3px solid #000;
+            padding: 12px 20px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            font-size: 12px;
+            color: #000;
+            min-width: 70px;
+            transition: all 0.1s;
+            position: relative;
+            text-transform: uppercase;
+        }
+
+        .pixel-btn:hover {
+            background: #b0b0b0;
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0 #000;
+        }
+
+        .pixel-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: none;
+        }
+
+        .pixel-btn.play {
+            background: #4CAF50;
+        }
+
+        .pixel-btn.stop {
+            background: #f44336;
+        }
+
+        .pixel-btn.upload {
+            background: #2196F3;
+        }
+
+        .volume-control {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .volume-label {
+            color: #fff;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            height: 8px;
+            -webkit-appearance: none;
+            background: #333;
+            border: 2px solid #000;
+            border-radius: 0;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00ff88;
+            border: 2px solid #000;
+            cursor: pointer;
+        }
+
+        .status {
+            margin-top: 15px;
+            color: #ffcc00;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 10px;
+            min-height: 15px;
+        }
+
+        .instructions {
+            color: #aaa;
+            font-size: 12px;
+            margin-top: 30px;
+            font-family: 'Press Start 2P', cursive;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 400px) {
+            .pixel-player {
+                width: 280px;
+                padding: 15px;
+            }
+            
+            .controls {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ПИКСЕЛЬНЫЙ ПЛЕЕР</h1>
+        
+        <div class="pixel-player">
+            <div class="pixel-display">
+                <canvas id="pixelViz" width="300" height="120"></canvas>
+                <div class="track-info" id="trackInfo">Загрузите аудиофайл</div>
+            </div>
+            
+            <div class="volume-control">
+                <span class="volume-label">ГРОМКОСТЬ:</span>
+                <input type="range" id="volume" min="0" max="100" value="70">
+            </div>
+            
+            <div class="controls">
+                <button class="pixel-btn upload" onclick="uploadAudio()">📁 ЗАГРУЗИТЬ</button>
+                <button class="pixel-btn play" onclick="playPause()">▶ ВОСПРОИЗВЕСТИ</button>
+                <button class="pixel-btn stop" onclick="stop()">⏹ ОСТАНОВИТЬ</button>
+            </div>
+            
+            <div class="status" id="status">Готов к работе</div>
+        </div>
+        
+        <div class="instructions">
+            [1] Загрузите MP3 файл<br>
+            [2] Нажмите ВОСПРОИЗВЕСТИ<br>
+            [3] Наслаждайтесь визуализацией!
+        </div>
+    </div>
+
+    <script>
+        // Элементы DOM
+        const canvas = document.getElementById('pixelViz');
+        const ctx = canvas.getContext('2d');
+        const trackInfo = document.getElementById('trackInfo');
+        const statusEl = document.getElementById('status');
+        const volumeControl = document.getElementById('volume');
+
+        // Аудио переменные
+        let audioContext;
+        let audioElement;
+        let analyser;
+        let source;
+        let isPlaying = false;
+        let currentFileName = '';
+        let animationId;
+
+        // Инициализация аудио
+        function initAudio() {
+            if (!audioElement) {
+                audioElement = new Audio();
+                audioElement.crossOrigin = "anonymous";
+                
+                audioElement.addEventListener('ended', () => {
+                    isPlaying = false;
+                    statusEl.textContent = 'ВОСПРОИЗВЕДЕНИЕ ЗАВЕРШЕНО';
+                    cancelAnimationFrame(animationId);
+                });
+            }
+        }
+
+        // Загрузка аудиофайла
+        function uploadAudio() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'audio/*';
+            
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                currentFileName = file.name;
+                const url = URL.createObjectURL(file);
+                
+                if (audioElement) {
+                    audioElement.pause();
+                    isPlaying = false;
+                }
+                
+                initAudio();
+                audioElement.src = url;
+                
+                trackInfo.textContent = file.name.slice(0, 20) + (file.name.length > 20 ? '...' : '');
+                statusEl.textContent = 'ФАЙЛ ЗАГРУЖЕН';
+                
+                // Сбрасываем визуализацию
+                drawIdleScreen();
+            };
+            
+            input.click();
+        }
+
+        // Воспроизведение/пауза
+        function playPause() {
+            if (!audioElement || !audioElement.src) {
+                statusEl.textContent = 'СНАЧАЛА ЗАГРУЗИТЕ АУДИОФАЙЛ';
+                return;
+            }
+            
+            if (!isPlaying) {
+                playAudio();
+            } else {
+                pauseAudio();
+            }
+        }
+
+        // Воспроизведение
+        function playAudio() {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                source = audioContext.createMediaElementSource(audioElement);
+                
+                source.connect(analyser);
+                analyser.connect(audioContext.destination);
+                
+                analyser.fftSize = 256;
+            }
+            
+            audioElement.play();
+            isPlaying = true;
+            statusEl.textContent = 'ИГРАЕТ...';
+            updateVolume();
+            
+            // Запускаем визуализацию
+            visualize();
+        }
+
+        // Пауза
+        function pauseAudio() {
+            audioElement.pause();
+            isPlaying = false;
+            statusEl.textContent = 'НА ПАУЗЕ';
+            cancelAnimationFrame(animationId);
+            drawPausedScreen();
+        }
+
+        // Остановка
+        function stop() {
+            if (audioElement) {
+                audioElement.pause();
+                audioElement.currentTime = 0;
+                isPlaying = false;
+                statusEl.textContent = 'ОСТАНОВЛЕНО';
+            }
+            
+            cancelAnimationFrame(animationId);
+            drawIdleScreen();
+        }
+
+        // Обновление громкости
+        function updateVolume() {
+            if (audioElement) {
+                const volume = volumeControl.value / 100;
+                audioElement.volume = volume;
+            }
+        }
+
+        // Визуализация аудио
+        function visualize() {
+            if (!isPlaying) return;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Очищаем канвас
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем пиксельную визуализацию
+            const barWidth = 4;
+            const spacing = 2;
+            let x = 0;
+            
+            // Разделяем частоты на группы для разных эффектов
+            for (let i = 0; i < bufferLength; i += 2) {
+                const value = dataArray[i];
+                
+                // Басы (низкие частоты) - красные
+                if (i < 20) {
+                    ctx.fillStyle = `rgb(${100 + value}, 50, 50)`;
+                } 
+                // Средние частоты - зеленые
+                else if (i < 60) {
+                    ctx.fillStyle = `rgb(50, ${100 + value}, 50)`;
+                }
+                // Высокие частоты - синие
+                else {
+                    ctx.fillStyle = `rgb(50, 50, ${100 + value})`;
+                }
+                
+                // Рисуем столбик
+                const barHeight = value / 2;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                
+                // Добавляем пиксельный эффект
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(x, canvas.height - barHeight, 1, 1);
+                
+                x += barWidth + spacing;
+                
+                if (x >= canvas.width) break;
+            }
+            
+            // Рисуем волну сверху
+            ctx.beginPath();
+            ctx.strokeStyle = '#00ff88';
+            ctx.lineWidth = 2;
+            
+            analyser.getByteTimeDomainData(dataArray);
+            
+            const sliceWidth = canvas.width / bufferLength;
+            let waveX = 0;
+            
+            for (let i = 0; i < bufferLength; i++) {
+                const v = dataArray[i] / 128.0;
+                const y = v * canvas.height / 3;
+                
+                if (i === 0) {
+                    ctx.moveTo(waveX, y);
+                } else {
+                    ctx.lineTo(waveX, y);
+                }
+                
+                waveX += sliceWidth;
+            }
+            
+            ctx.stroke();
+            
+            // Рисуем сетку
+            ctx.strokeStyle = 'rgba(0, 255, 136, 0.2)';
+            ctx.lineWidth = 1;
+            
+            // Вертикальные линии
+            for (let i = 0; i < canvas.width; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Горизонтальные линии
+            for (let i = 0; i < canvas.height; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            animationId = requestAnimationFrame(visualize);
+        }
+
+        // Экран в режиме ожидания
+        function drawIdleScreen() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем сетку
+            ctx.strokeStyle = 'rgba(0, 255, 136, 0.1)';
+            ctx.lineWidth = 1;
+            
+            for (let i = 0; i < canvas.width; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let i = 0; i < canvas.height; i += 20) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(canvas.width, i);
+                ctx.stroke();
+            }
+            
+            // Текст
+            ctx.fillStyle = '#00ff88';
+            ctx.font = '12px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            ctx.fillText('ЗАГРУЗИТЕ', canvas.width/2, canvas.height/2 - 10);
+            ctx.fillText('АУДИОФАЙЛ', canvas.width/2, canvas.height/2 + 10);
+        }
+
+        // Экран на паузе
+        function drawPausedScreen() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Мигающий текст
+            const blink = Math.floor(Date.now() / 500) % 2 === 0;
+            
+            if (blink) {
+                ctx.fillStyle = '#ffcc00';
+                ctx.font = '14px "Press Start 2P"';
+                ctx.textAlign = 'center';
+                ctx.fillText('ПАУЗА', canvas.width/2, canvas.height/2);
+            }
+        }
+
+        // Инициализация
+        window.onload = function() {
+            initAudio();
+            drawIdleScreen();
+            
+            // Обработчик громкости
+            volumeControl.addEventListener('input', updateVolume);
+            
+            // Автоматическое обновление громкости при загрузке
+            updateVolume();
+        };
+
+        // Обработчик изменения размера окна (для адаптивности)
+        window.addEventListener('resize', function() {
+            // Сохраняем пропорции канваса
+            canvas.width = 300;
+            canvas.height = 120;
+            
+            if (!isPlaying) {
+                if (audioElement && audioElement.paused) {
+                    drawPausedScreen();
+                } else {
+                    drawIdleScreen();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
