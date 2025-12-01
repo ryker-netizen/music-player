@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PixelSound - Возрождение</title>
+    <title>PixelSound - Ultimate</title>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -19,59 +19,100 @@
             --pixel-gray: #333344;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
+        * { margin: 0; padding: 0; box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; outline: none; }
 
         body {
             background: linear-gradient(135deg, var(--pixel-dark) 0%, #1a1a3a 100%);
             min-height: 100vh;
             font-family: 'Silkscreen', monospace;
             color: #fff;
-            padding: 15px;
+            padding: 10px;
             overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .container { max-width: 800px; margin: 0 auto; }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            width: 100%;
+            flex: 1;
+        }
 
-        /* Красивая шапка из первой версии */
-        .header { text-align: center; margin-bottom: 30px; padding: 20px 0; border-bottom: 4px dashed var(--pixel-purple); }
+        /* === ЛОГОТИП (ВОЗВРАЩЕНИЕ) === */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            position: relative;
+            padding: 30px 0;
+        }
+
         .title {
-            font-family: 'Press Start 2P'; font-size: 1.8rem; color: var(--pixel-cyan);
-            text-shadow: 3px 3px 0 var(--pixel-purple); margin-bottom: 10px; line-height: 1.4;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            color: var(--pixel-cyan);
+            text-shadow: 
+                4px 4px 0 var(--pixel-purple),
+                8px 8px 0 rgba(0, 0, 0, 0.5);
+            line-height: 1.3;
+            animation: glitch 3s infinite;
         }
-        .subtitle { color: var(--pixel-green); font-size: 0.9rem; letter-spacing: 1px; }
 
-        /* Основной плеер */
+        @keyframes glitch {
+            0% { text-shadow: 4px 4px 0 var(--pixel-purple); }
+            50% { text-shadow: -4px 4px 0 var(--pixel-pink); }
+            100% { text-shadow: 4px 4px 0 var(--pixel-purple); }
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--pixel-green);
+            text-shadow: 2px 2px 0 #000;
+            background: #000;
+            display: inline-block;
+            padding: 5px 10px;
+            border: 2px solid var(--pixel-gray);
+        }
+
+        /* === ПЛЕЕР === */
         .player-box {
             background: rgba(20, 20, 40, 0.9);
             border: 6px solid;
             border-image: linear-gradient(45deg, var(--pixel-blue), var(--pixel-pink)) 1;
             padding: 20px;
-            box-shadow: 0 0 20px rgba(0, 102, 255, 0.2);
-            margin-bottom: 30px;
+            box-shadow: 0 0 30px rgba(0, 102, 255, 0.2);
+            margin-bottom: 20px;
         }
 
-        /* Экран визуализации */
+        /* Экран */
         .screen-container {
             background: #000;
             border: 4px solid var(--pixel-gray);
             height: 180px;
             margin-bottom: 20px;
             position: relative;
+            overflow: hidden;
         }
         canvas { width: 100%; height: 100%; display: block; }
 
-        /* Информация */
+        /* Инфо */
         .track-info {
             display: flex; justify-content: space-between; align-items: center;
-            background: rgba(0,0,0,0.6); padding: 10px; border: 2px solid var(--pixel-gray);
+            background: rgba(0,0,0,0.6); padding: 12px; border: 2px solid var(--pixel-gray);
             margin-bottom: 20px;
         }
-        .track-name { color: var(--pixel-yellow); font-family: 'Press Start 2P'; font-size: 0.7rem; max-width: 60%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .track-bits { color: var(--pixel-cyan); font-size: 0.8rem; }
+        .track-name { 
+            color: var(--pixel-yellow); font-family: 'Press Start 2P'; font-size: 0.7rem; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%;
+        }
+        .track-status { color: var(--pixel-red); font-size: 0.7rem; display: none; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
 
         /* Ползунки */
-        .controls { display: grid; gap: 15px; margin-bottom: 20px; }
-        .control-row { display: flex; flex-direction: column; gap: 5px; }
+        .controls { display: grid; gap: 18px; margin-bottom: 25px; }
+        .control-row { display: flex; flex-direction: column; gap: 8px; }
         .label { color: var(--pixel-green); font-size: 0.8rem; display: flex; justify-content: space-between; }
         
         input[type=range] {
@@ -79,73 +120,92 @@
             border: 2px solid var(--pixel-gray);
         }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 20px; height: 20px; background: var(--pixel-pink);
-            border: 2px solid #fff; cursor: pointer; box-shadow: 2px 2px 0 #000;
+            -webkit-appearance: none; width: 24px; height: 24px; background: var(--pixel-cyan);
+            border: 3px solid #000; cursor: pointer; box-shadow: 3px 3px 0 rgba(0,0,0,0.5);
         }
 
         /* Кнопки */
-        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .btn-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .pixel-btn {
-            font-family: 'Press Start 2P'; font-size: 0.7rem; padding: 15px 5px;
+            font-family: 'Press Start 2P'; font-size: 0.75rem; padding: 16px 5px;
             border: 4px solid #000; cursor: pointer; color: #fff; text-align: center;
-            transition: transform 0.1s; text-shadow: 1px 1px 0 #000;
+            transition: transform 0.1s, box-shadow 0.1s; text-shadow: 1px 1px 0 #000;
             display: flex; align-items: center; justify-content: center; gap: 8px;
+            position: relative;
         }
-        .pixel-btn:active { transform: scale(0.95); }
+        .pixel-btn:active { transform: translate(2px, 2px); box-shadow: none; }
+        .pixel-btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 rgba(0,0,0,0.5); }
+        
         .btn-load { background: var(--pixel-blue); }
         .btn-play { background: var(--pixel-green); color: #000; }
         .btn-stop { background: var(--pixel-red); }
-        .btn-mode { background: var(--pixel-purple); }
+        .btn-rec { background: var(--pixel-pink); }
+        .btn-rec.recording { background: #fff; color: #f00; border-color: #f00; }
 
-        /* Пианино */
-        .piano-box {
-            background: rgba(20, 20, 40, 0.9);
-            border: 6px solid var(--pixel-green);
-            padding: 15px; text-align: center;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.2);
+        /* === ПЛЕЙЛИСТ (НОВОЕ) === */
+        .playlist-box {
+            background: rgba(10, 10, 20, 0.9);
+            border: 4px solid var(--pixel-gray);
+            margin-top: 20px;
+            padding: 10px;
         }
-        .piano-title { font-family: 'Press Start 2P'; color: var(--pixel-green); margin-bottom: 15px; font-size: 0.8rem; }
-        
-        .piano {
-            display: flex; justify-content: center; height: 100px; position: relative;
-            user-select: none;
+        .playlist-header {
+            color: var(--pixel-cyan); font-family: 'Press Start 2P'; font-size: 0.8rem;
+            margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px dashed var(--pixel-gray);
         }
-        .key {
-            position: relative; border: 2px solid #000; cursor: pointer;
-            transition: background 0.1s;
+        .playlist-list {
+            max-height: 200px; overflow-y: auto;
+            scrollbar-width: thin; scrollbar-color: var(--pixel-purple) var(--pixel-dark);
         }
-        .white-key {
-            flex: 1; background: #fff; height: 100%; z-index: 1;
-            border-radius: 0 0 4px 4px;
-        }
-        .white-key.active { background: #ddd; transform: translateY(2px); }
-        
-        .black-key {
-            width: 8%; height: 60%; background: #000; z-index: 2;
-            margin-left: -4%; margin-right: -4%;
-            border-radius: 0 0 3px 3px;
-        }
-        .black-key.active { background: #333; }
+        .playlist-list::-webkit-scrollbar { width: 8px; }
+        .playlist-list::-webkit-scrollbar-track { background: var(--pixel-dark); }
+        .playlist-list::-webkit-scrollbar-thumb { background: var(--pixel-purple); border: 1px solid #000; }
 
-        /* Drop Zone overlay */
+        .playlist-item {
+            padding: 10px; margin-bottom: 5px; background: rgba(255,255,255,0.05);
+            cursor: pointer; font-size: 0.8rem; display: flex; justify-content: space-between;
+            transition: 0.2s; border: 1px solid transparent;
+        }
+        .playlist-item:hover { background: rgba(255,255,255,0.1); border-color: var(--pixel-blue); }
+        .playlist-item.active { 
+            background: var(--pixel-green); color: #000; border: 2px solid #fff;
+            font-family: 'Press Start 2P'; font-size: 0.7rem;
+        }
+
+        /* === ФУТЕР (НОВОЕ) === */
+        .footer {
+            text-align: center; margin-top: 40px; padding: 20px 0;
+            border-top: 4px solid var(--pixel-gray);
+            color: var(--pixel-gray); font-size: 0.8rem;
+        }
+        .footer span { color: var(--pixel-yellow); }
+
+        /* Drop Zone */
         .drop-overlay {
             position: fixed; top:0; left:0; right:0; bottom:0;
-            background: rgba(0,0,0,0.8); z-index: 999;
-            display: none; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.85); z-index: 999;
+            display: none; align-items: center; justify-content: center; flex-direction: column;
             color: var(--pixel-green); font-family: 'Press Start 2P';
-            border: 10px dashed var(--pixel-green);
+            border: 10px dashed var(--pixel-green); text-align: center; line-height: 2;
         }
         .dragging .drop-overlay { display: flex; }
 
+        @media (max-width: 600px) {
+            .title { font-size: 1.5rem; }
+            .btn-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
-    <div class="drop-overlay">БРОСАЙ ФАЙЛ СЮДА!</div>
+    <div class="drop-overlay">
+        <div>ПЕРЕТАЩИ МУЗЫКУ СЮДА</div>
+        <div style="font-size: 0.7em; color: var(--pixel-cyan)">ПОДДЕРЖИВАЮТСЯ MP3, WAV, OGG</div>
+    </div>
 
     <div class="container">
         <header class="header">
             <h1 class="title">PixelSound</h1>
-            <div class="subtitle">ИСТИННЫЙ 8-БИТНЫЙ ЗВУК</div>
+            <div class="subtitle">RETRO AUDIO PROCESSOR</div>
         </header>
 
         <div class="player-box">
@@ -154,8 +214,8 @@
             </div>
 
             <div class="track-info">
-                <div class="track-name" id="trackName">НЕТ КАССЕТЫ</div>
-                <div class="track-bits" id="bitDisplay">16-BIT</div>
+                <div class="track-name" id="trackName">ПЛЕЙЛИСТ ПУСТ</div>
+                <div class="track-status" id="recStatus">● ЗАПИСЬ</div>
             </div>
 
             <div class="controls">
@@ -164,18 +224,18 @@
                     <input type="range" id="volSlider" min="0" max="100" value="80">
                 </div>
                 <div class="control-row">
-                    <div class="label"><span>БИТНОСТЬ (CRUSH)</span> <span id="bitVal">16</span></div>
+                    <div class="label"><span>БИТКРАШ (BIT DEPTH)</span> <span id="bitVal">16-BIT</span></div>
                     <input type="range" id="bitSlider" min="1" max="16" value="16" step="1" style="direction: rtl">
                 </div>
                 <div class="control-row">
-                    <div class="label"><span>ЧАСТОТА (LOWER)</span> <span id="rateVal">NORM</span></div>
+                    <div class="label"><span>ЧАСТОТА (SAMPLE RATE)</span> <span id="rateVal">NORM</span></div>
                     <input type="range" id="rateSlider" min="1" max="50" value="1">
                 </div>
             </div>
 
             <div class="btn-grid">
                 <button class="pixel-btn btn-load" onclick="document.getElementById('fileInput').click()">
-                    <i class="fas fa-upload"></i> ФАЙЛ
+                    <i class="fas fa-plus"></i> ДОБАВИТЬ
                 </button>
                 <button class="pixel-btn btn-play" id="btnPlay">
                     <i class="fas fa-play"></i> ИГРАТЬ
@@ -183,280 +243,370 @@
                 <button class="pixel-btn btn-stop" id="btnStop">
                     <i class="fas fa-stop"></i> СТОП
                 </button>
-                <button class="pixel-btn btn-mode" id="btnMode">
-                    <i class="fas fa-wave-square"></i> ВИД
+                <button class="pixel-btn btn-rec" id="btnRec">
+                    <i class="fas fa-circle"></i> ЗАПИСЬ В WAV
                 </button>
             </div>
         </div>
 
-        <div class="piano-box">
-            <div class="piano-title">СИНТЕЗАТОР</div>
-            <div class="piano" id="pianoKeys">
+        <div class="playlist-box">
+            <div class="playlist-header">СПИСОК ТРЕКОВ</div>
+            <div class="playlist-list" id="playlist">
+                <div class="playlist-item" style="justify-content: center; opacity: 0.5;">
+                    Перетащите файлы или нажмите "ДОБАВИТЬ"
                 </div>
+            </div>
         </div>
+
+        <footer class="footer">
+            <div>PIXELSOUND ULTIMATE © 2025</div>
+            <div style="margin-top: 10px; font-size: 0.6rem;">MADE FOR <span>RETRO LOVERS</span></div>
+        </footer>
     </div>
 
-    <input type="file" id="fileInput" accept="audio/*" style="display:none">
+    <input type="file" id="fileInput" accept="audio/*" multiple style="display:none">
 
     <script>
-        // === АУДИО ДВИЖОК (МОЩНЫЙ) ===
+        // === 1. AUDIO WORKLET (РЕШЕНИЕ ПРОБЛЕМЫ С ЗАВИСАНИЕМ) ===
+        // Мы создаем код процессора внутри строки и делаем из него Blob, 
+        // чтобы не создавать отдельный файл .js
+        const workletCode = `
+            class BitCrusherProcessor extends AudioWorkletProcessor {
+                constructor() {
+                    super();
+                    this.bitDepth = 16;
+                    this.sampleFactor = 1;
+                    this._phasor = 0;
+                    this._lastSample = 0;
+                }
+
+                static get parameterDescriptors() {
+                    return [
+                        { name: 'bitDepth', defaultValue: 16, minValue: 1, maxValue: 16 },
+                        { name: 'sampleFactor', defaultValue: 1, minValue: 1, maxValue: 100 }
+                    ];
+                }
+
+                process(inputs, outputs, parameters) {
+                    const input = inputs[0];
+                    const output = outputs[0];
+                    
+                    // Получаем параметры (они могут меняться в реальном времени)
+                    const bitDepth = parameters.bitDepth.length > 1 ? parameters.bitDepth[0] : parameters.bitDepth[0]; 
+                    const sampleFactor = parameters.sampleFactor.length > 1 ? parameters.sampleFactor[0] : parameters.sampleFactor[0];
+
+                    const step = Math.pow(0.5, bitDepth);
+
+                    for (let channel = 0; channel < input.length; ++channel) {
+                        const inputChannel = input[channel];
+                        const outputChannel = output[channel];
+                        
+                        // Если каналов нет, выходим
+                        if (!inputChannel) continue;
+
+                        for (let i = 0; i < inputChannel.length; ++i) {
+                            // Логика Downsampling (понижение частоты)
+                            // Мы обновляем сэмпл только если счетчик делится на фактор
+                            // Так как это Worklet, нам нужен глобальный счетчик или локальный для блока
+                            // Для простоты используем i + globalTime (но в worklet это frame)
+                            
+                            // Упрощенная логика sample-hold внутри буфера
+                            if ((currentFrame + i) % Math.floor(sampleFactor) === 0) {
+                                let sample = inputChannel[i];
+                                
+                                // Логика Bitcrushing
+                                if (bitDepth < 16) {
+                                    sample = Math.floor(sample / step) * step;
+                                }
+                                this._lastSample = sample;
+                            }
+                            
+                            outputChannel[i] = this._lastSample;
+                        }
+                    }
+                    return true;
+                }
+            }
+            registerProcessor('bit-crusher-processor', BitCrusherProcessor);
+        `;
+
+        const workletBlob = new Blob([workletCode], { type: 'application/javascript' });
+        const workletUrl = URL.createObjectURL(workletBlob);
+
+        // === 2. AUDIO ENGINE ===
         class AudioEngine {
             constructor() {
                 this.ctx = new (window.AudioContext || window.webkitAudioContext)();
                 this.source = null;
-                this.buffer = null;
-                
-                // Создаем узлы
+                this.workletNode = null;
                 this.gainNode = this.ctx.createGain();
                 this.analyser = this.ctx.createAnalyser();
-                this.analyser.fftSize = 512;
+                this.mediaRecorder = null;
+                this.dest = this.ctx.createMediaStreamDestination(); // Для записи
                 
-                // Эффект ScriptProcessor (для настоящего 8-бит звука)
-                this.processor = this.ctx.createScriptProcessor(4096, 1, 1);
-                this.bitDepth = 16;
-                this.sampleFactor = 1;
-                
-                this.setupProcessor();
-                
-                // Цепочка: Processor -> Gain -> Analyser -> Out
-                this.processor.connect(this.gainNode);
-                this.gainNode.connect(this.analyser);
-                this.analyser.connect(this.ctx.destination);
+                this.analyser.fftSize = 256;
+                this.isReady = false;
+
+                // Загружаем модуль
+                this.ctx.audioWorklet.addModule(workletUrl).then(() => {
+                    this.workletNode = new AudioWorkletNode(this.ctx, 'bit-crusher-processor');
+                    
+                    // Цепочка: Worklet -> Gain -> Analyser -> Speakers
+                    //                      |-> Recorder Destination
+                    this.workletNode.connect(this.gainNode);
+                    this.gainNode.connect(this.analyser);
+                    this.analyser.connect(this.ctx.destination);
+                    this.gainNode.connect(this.dest); // Подключаем к выходу записи
+                    
+                    this.isReady = true;
+                    console.log("Audio Engine Ready");
+                }).catch(e => console.error("Worklet Error:", e));
             }
 
-            setupProcessor() {
-                this.processor.onaudioprocess = (e) => {
-                    const input = e.inputBuffer.getChannelData(0);
-                    const output = e.outputBuffer.getChannelData(0);
-                    const step = Math.pow(0.5, this.bitDepth); // Шаг квантования
+            async playTrack(arrayBuffer) {
+                if (this.ctx.state === 'suspended') await this.ctx.resume();
+                if (!this.isReady) return;
 
-                    for (let i = 0; i < input.length; i++) {
-                        let sample = input[i];
+                this.stop();
 
-                        // 1. Понижение частоты (Downsampling)
-                        // Берем значение только каждый N-й раз, иначе повторяем старое
-                        const index = Math.floor(i / this.sampleFactor) * this.sampleFactor;
-                        sample = input[index] || 0;
-
-                        // 2. Биткраш (Bitcrushing)
-                        if (this.bitDepth < 16) {
-                            sample = Math.floor(sample / step) * step;
-                        }
-
-                        output[i] = sample;
-                    }
-                };
-            }
-
-            async loadFile(file) {
-                const arrayBuffer = await file.arrayBuffer();
-                this.buffer = await this.ctx.decodeAudioData(arrayBuffer);
-                return this.buffer;
-            }
-
-            play() {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                if (!this.buffer) return;
-                
-                this.stop(false); // Остановить предыдущее, но не сбрасывать
-                
+                const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
                 this.source = this.ctx.createBufferSource();
-                this.source.buffer = this.buffer;
-                this.source.connect(this.processor); // Подключаем к процессору эффектов
+                this.source.buffer = audioBuffer;
+                this.source.loop = true; // Зацикливаем для удобства
+
+                // Подключаем Source -> Worklet
+                this.source.connect(this.workletNode);
                 this.source.start(0);
-                
-                this.source.onended = () => document.getElementById('btnPlay').innerHTML = '<i class="fas fa-play"></i> ИГРАТЬ';
             }
 
-            playTone(freq) {
-                if (this.ctx.state === 'suspended') this.ctx.resume();
-                
-                const osc = this.ctx.createOscillator();
-                const env = this.ctx.createGain();
-                
-                // Выбираем форму волны в зависимости от "жесткости" настроек
-                osc.type = this.bitDepth < 6 ? 'square' : 'sawtooth';
-                osc.frequency.value = freq;
-                
-                env.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                env.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.5);
-                
-                osc.connect(this.processor); // Звук клавиш тоже проходит через эффекты!
-                osc.connect(env).connect(this.processor);
-                
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.5);
-            }
-
-            stop(fullStop = true) {
+            stop() {
                 if (this.source) {
                     try { this.source.stop(); } catch(e){}
                     this.source.disconnect();
+                    this.source = null;
                 }
-                if(fullStop) this.source = null;
             }
 
             setParams(vol, bits, rate) {
+                if (!this.isReady) return;
                 this.gainNode.gain.value = vol;
-                this.bitDepth = bits;
-                this.sampleFactor = rate;
+                
+                // Передаем параметры в Worklet
+                const bitParam = this.workletNode.parameters.get('bitDepth');
+                const rateParam = this.workletNode.parameters.get('sampleFactor');
+                
+                bitParam.setValueAtTime(bits, this.ctx.currentTime);
+                rateParam.setValueAtTime(rate, this.ctx.currentTime);
+            }
+
+            // Логика записи
+            startRecording() {
+                this.chunks = [];
+                this.mediaRecorder = new MediaRecorder(this.dest.stream);
+                
+                this.mediaRecorder.ondataavailable = (e) => this.chunks.push(e.data);
+                this.mediaRecorder.onstop = () => {
+                    const blob = new Blob(this.chunks, { 'type' : 'audio/wav; codecs=MS_PCM' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `pixel_sound_${Date.now()}.wav`;
+                    a.click();
+                };
+                
+                this.mediaRecorder.start();
+            }
+
+            stopRecording() {
+                if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+                    this.mediaRecorder.stop();
+                }
             }
         }
 
-        // === ИНТЕРФЕЙС И ЛОГИКА ===
+        // === 3. UI & LOGIC ===
         const audio = new AudioEngine();
-        const canvas = document.getElementById('vizCanvas');
-        const ctx = canvas.getContext('2d');
-        let vizMode = 0; // 0 - Спектр, 1 - Волна
+        const playlist = [];
+        let currentTrackIndex = -1;
+        let isRecording = false;
 
-        // Элементы UI
+        // Элементы
+        const playlistEl = document.getElementById('playlist');
+        const trackNameEl = document.getElementById('trackName');
         const fileInput = document.getElementById('fileInput');
-        const trackName = document.getElementById('trackName');
-        const volSlider = document.getElementById('volSlider');
-        const bitSlider = document.getElementById('bitSlider');
-        const rateSlider = document.getElementById('rateSlider');
+        
+        // Кнопки
+        const btnPlay = document.getElementById('btnPlay');
+        const btnRec = document.getElementById('btnRec');
+        const recStatus = document.getElementById('recStatus');
 
-        // Обработка файла
-        fileInput.onchange = async (e) => {
-            if (e.target.files[0]) {
-                trackName.textContent = "ЗАГРУЗКА...";
-                await audio.loadFile(e.target.files[0]);
-                trackName.textContent = e.target.files[0].name.toUpperCase();
-                document.getElementById('btnPlay').click();
+        // Обработка файлов
+        function handleFiles(files) {
+            // Если плейлист был пуст, очищаем заглушку
+            if (playlist.length === 0) playlistEl.innerHTML = '';
+
+            Array.from(files).forEach(file => {
+                playlist.push(file);
+                addTrackToUI(file, playlist.length - 1);
+            });
+
+            // Если ничего не играло, запускаем первый загруженный
+            if (currentTrackIndex === -1 && playlist.length > 0) {
+                loadTrack(playlist.length - files.length); // индекс первого добавленного
+            }
+        }
+
+        function addTrackToUI(file, index) {
+            const div = document.createElement('div');
+            div.className = 'playlist-item';
+            div.innerHTML = `<span>${index + 1}. ${file.name}</span>`;
+            div.onclick = () => loadTrack(index);
+            playlistEl.appendChild(div);
+        }
+
+        function loadTrack(index) {
+            if (index < 0 || index >= playlist.length) return;
+            
+            // UI Обновление
+            document.querySelectorAll('.playlist-item').forEach(el => el.classList.remove('active'));
+            playlistEl.children[index].classList.add('active');
+            
+            currentTrackIndex = index;
+            trackNameEl.textContent = playlist[index].name;
+            
+            // Чтение файла
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                audio.playTrack(e.target.result);
+                updatePlayButton(true);
+            };
+            reader.readAsArrayBuffer(playlist[index]);
+        }
+
+        // Контроллеры
+        fileInput.onchange = (e) => handleFiles(e.target.files);
+        
+        btnPlay.onclick = () => {
+            if (audio.ctx.state === 'suspended') audio.ctx.resume();
+            if (currentTrackIndex === -1 && playlist.length > 0) loadTrack(0);
+            else if (audio.source) {
+                 audio.stop(); // Это пауза по сути (стоп)
+                 updatePlayButton(false);
+            } else if (currentTrackIndex !== -1) {
+                 loadTrack(currentTrackIndex); // Рестарт
             }
         };
 
-        // Кнопки
-        document.getElementById('btnPlay').onclick = () => {
-            audio.play();
-            document.getElementById('btnPlay').innerHTML = '<i class="fas fa-pause"></i> ИГРАЕТ';
-        };
         document.getElementById('btnStop').onclick = () => {
             audio.stop();
-            document.getElementById('btnPlay').innerHTML = '<i class="fas fa-play"></i> ИГРАТЬ';
+            updatePlayButton(false);
+            if(isRecording) toggleRec();
         };
-        document.getElementById('btnMode').onclick = () => vizMode = (vizMode + 1) % 2;
 
-        // Слайдеры (обновление в реальном времени)
-        function updateAudioParams() {
-            const vol = volSlider.value / 100;
-            const bits = parseInt(bitSlider.value);
-            const rate = parseInt(rateSlider.value);
-            
-            audio.setParams(vol, bits, rate);
-            
-            // Обновление текстов
-            document.getElementById('volVal').textContent = volSlider.value + '%';
-            document.getElementById('bitVal').textContent = bits + (bits < 16 ? '-BIT' : '');
-            document.getElementById('rateVal').textContent = rate === 1 ? 'NORM' : 'LOW';
-            document.getElementById('bitDisplay').textContent = `${bits}-BIT`;
+        btnRec.onclick = toggleRec;
+
+        function toggleRec() {
+            if (!isRecording) {
+                audio.startRecording();
+                isRecording = true;
+                btnRec.classList.add('recording');
+                btnRec.innerHTML = '<i class="fas fa-square"></i> СТОП ЗАПИСЬ';
+                recStatus.style.display = 'block';
+            } else {
+                audio.stopRecording();
+                isRecording = false;
+                btnRec.classList.remove('recording');
+                btnRec.innerHTML = '<i class="fas fa-circle"></i> ЗАПИСЬ В WAV';
+                recStatus.style.display = 'none';
+            }
         }
 
-        [volSlider, bitSlider, rateSlider].forEach(el => el.addEventListener('input', updateAudioParams));
+        function updatePlayButton(playing) {
+            btnPlay.innerHTML = playing ? 
+                '<i class="fas fa-pause"></i> ПАУЗА' : 
+                '<i class="fas fa-play"></i> ИГРАТЬ';
+        }
 
-        // === ВИЗУАЛИЗАЦИЯ ===
-        function drawViz() {
-            requestAnimationFrame(drawViz);
+        // Слайдеры
+        const sliders = {
+            vol: document.getElementById('volSlider'),
+            bit: document.getElementById('bitSlider'),
+            rate: document.getElementById('rateSlider')
+        };
+
+        function updateParams() {
+            const vol = sliders.vol.value / 100;
+            const bits = parseInt(sliders.bit.value);
+            const rate = parseInt(sliders.rate.value);
+
+            audio.setParams(vol, bits, rate);
+
+            document.getElementById('volVal').textContent = `${sliders.vol.value}%`;
+            document.getElementById('bitVal').textContent = `${bits}-BIT`;
+            document.getElementById('rateVal').textContent = rate === 1 ? 'NORM' : `1/${rate}`;
+        }
+
+        Object.values(sliders).forEach(s => s.addEventListener('input', updateParams));
+
+        // Визуализация
+        const canvas = document.getElementById('vizCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function draw() {
+            requestAnimationFrame(draw);
             
-            // Подгонка размера канваса
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            
+            // Адаптация размера
+            if (canvas.width !== canvas.offsetWidth) {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
+
             const w = canvas.width;
             const h = canvas.height;
             const bufferLength = audio.analyser.frequencyBinCount;
             const data = new Uint8Array(bufferLength);
+            
+            audio.analyser.getByteFrequencyData(data);
 
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, w, h);
 
-            if (vizMode === 0) { // СПЕКТР
-                audio.analyser.getByteFrequencyData(data);
-                const barWidth = (w / bufferLength) * 2.5;
-                let x = 0;
+            const barWidth = (w / bufferLength) * 2.5;
+            let x = 0;
+
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = (data[i] / 255) * h;
                 
-                for(let i = 0; i < bufferLength; i++) {
-                    const barHeight = (data[i] / 255) * h;
-                    
-                    // Цвет меняется от высоты + времени
-                    const hue = i + Date.now() / 50;
-                    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
-                    ctx.fillRect(x, h - barHeight, barWidth, barHeight);
-                    x += barWidth + 1;
+                // Цвет зависит от биткраша (визуальная фишка)
+                const hue = i * 2 + (Date.now() / 20);
+                const saturation = 100;
+                const lightness = 50;
+
+                ctx.fillStyle = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                
+                // Рисуем "пиксельные" кирпичики вместо сплошной линии
+                const blockSize = 5;
+                const blocks = Math.floor(barHeight / blockSize);
+                
+                for (let j = 0; j < blocks; j++) {
+                    ctx.fillRect(x, h - (j * blockSize), barWidth - 1, blockSize - 1);
                 }
-            } else { // ВОЛНА
-                audio.analyser.getByteTimeDomainData(data);
-                ctx.lineWidth = 3;
-                ctx.strokeStyle = '#00ff88';
-                ctx.beginPath();
-                
-                const sliceWidth = w / bufferLength;
-                let x = 0;
-                
-                for(let i = 0; i < bufferLength; i++) {
-                    const v = data[i] / 128.0;
-                    const y = v * h / 2;
-                    
-                    if(i===0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                    x += sliceWidth;
-                }
-                ctx.stroke();
+
+                x += barWidth;
             }
         }
-        drawViz();
-
-        // === ПИАНИНО (Генерация клавиш) ===
-        function createPiano() {
-            const container = document.getElementById('pianoKeys');
-            const notes = ['C', 'D', 'E', 'F', 'G', 'A', 'B']; // Только белые для простоты разметки
-            const freqs = [261.6, 293.6, 329.6, 349.2, 392.0, 440.0, 493.8];
-            const blackFreqs = [277.2, 311.1, null, 370.0, 415.3, 466.2]; // C#, D#, -, F#, G#, A#
-
-            for(let i = 0; i < 7; i++) {
-                // Белая клавиша
-                const whiteKey = document.createElement('div');
-                whiteKey.className = 'key white-key';
-                whiteKey.onmousedown = () => {
-                    whiteKey.classList.add('active');
-                    audio.playTone(freqs[i]);
-                };
-                whiteKey.onmouseup = whiteKey.onmouseleave = () => whiteKey.classList.remove('active');
-                container.appendChild(whiteKey);
-
-                // Черная клавиша (если есть)
-                if (i !== 2 && i !== 6) { // E и B не имеют диезов справа в этой октаве
-                    const blackKey = document.createElement('div');
-                    blackKey.className = 'key black-key';
-                    // Находим правильную частоту для черной клавиши
-                    let bIndex = i > 2 ? i - 1 : i; 
-                    blackKey.onmousedown = () => {
-                        blackKey.classList.add('active');
-                        audio.playTone(blackFreqs[bIndex]);
-                    };
-                    blackKey.onmouseup = blackKey.onmouseleave = () => blackKey.classList.remove('active');
-                    container.appendChild(blackKey);
-                }
-            }
-        }
-        createPiano();
+        draw();
 
         // Drag & Drop
-        document.body.addEventListener('dragover', (e) => {
+        const body = document.body;
+        body.addEventListener('dragover', (e) => { e.preventDefault(); body.classList.add('dragging'); });
+        body.addEventListener('dragleave', () => body.classList.remove('dragging'));
+        body.addEventListener('drop', (e) => {
             e.preventDefault();
-            document.body.classList.add('dragging');
-        });
-        document.body.addEventListener('dragleave', () => document.body.classList.remove('dragging'));
-        document.body.addEventListener('drop', (e) => {
-            e.preventDefault();
-            document.body.classList.remove('dragging');
-            if(e.dataTransfer.files[0]) {
-                fileInput.files = e.dataTransfer.files;
-                fileInput.onchange({target: fileInput});
-            }
+            body.classList.remove('dragging');
+            if(e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
         });
 
     </script>
 </body>
 </html>
-
